@@ -465,7 +465,7 @@ p1 = (
 
 (
     ggplot(p1, aes(x = PO.Name, y = n, fill = Topic1))
-  + geom_bar(stat = "identity", width = 0.8)
+  + geom_bar(stat = "identity", width = 0.5)
   + ylab("Frequency")
   + xlab("PO")
   + ggtitle("Most Likely Topics of POs (Frequency in Portfolio)")
@@ -473,12 +473,12 @@ p1 = (
   + theme_minimal()
   + theme(legend.position = "right",
           plot.title = element_text(hjust = 0.5),
-          axis.text.x = element_text(angle = 0, vjust = 0.4)) 
+          axis.text.x = element_text(angle = 90, vjust = 0.4)) 
 )
 
 (
     ggplot(p1, aes(x = PO.Name, y = Percentage/100, fill = Topic1))
-  + geom_bar(stat = "identity", width = 0.8)
+  + geom_bar(stat = "identity", width = 0.5)
   + ylab("Percentage")
   + xlab("PO")
   + ggtitle("Most Likely Topics of POs (Percentage of Portfolio)")
@@ -486,8 +486,10 @@ p1 = (
   + theme_minimal()
   + theme(legend.position = "right",
           plot.title = element_text(hjust = 0.5),
-          axis.text.x = element_text(angle = 0, vjust = 0.4)) 
+          axis.text.x = element_text(angle = 90, vjust = 0.4)) 
 )
+
+table(p$PO.Name)
 ```
 
 ## Distributions of Topics
@@ -533,7 +535,7 @@ colors$Topic = sort(unique(p1$Topic))
   + theme_minimal()
   + theme(legend.position = "right",
           plot.title = element_text(hjust = 0.5),
-          axis.text.x = element_text(angle = 0, vjust = 0.4)) 
+          axis.text.x = element_text(angle = 90, vjust = 0.4)) 
 )
 ```
 
@@ -553,7 +555,8 @@ for(topic in sort(unique(p1$Topic))){
                 plot.title = element_text(hjust = 0.5),
                 plot.subtitle = element_text(hjust = 0.5),
                 #axis.text.x = element_text(color = s$Color),
-                panel.grid.major.x = element_blank())
+                panel.grid.major.x = element_blank(),
+                axis.text.x = element_text(angle = 90, vjust = 0.4))
   )
   
   print(g)
