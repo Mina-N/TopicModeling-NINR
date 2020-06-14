@@ -1,2 +1,11 @@
 Python/env/
-data/
+Python/B1_metadata.csv
+Python/B1_textdata.csv
+Python/lemma_stopwords.txt
+Python/stopwords.txt
+R/B1_Active_R01_Equivalent_Grants.csv
+R/B1_Optimal_Parameters.csv
+R/B1_Round1_2019-12-06.xlsx
+R/B1_Round2_2019-12-06.xlsx
+R/Bioinformatics_Meta_Data_2009+.csv
+R/Bioinformatics_Text_Data_2009+.csv
