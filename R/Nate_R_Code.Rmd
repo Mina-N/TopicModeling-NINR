@@ -51,13 +51,13 @@ First we load the text and meta data of the active grants.  We pull four sources
 \item S - Specific Aims
 \end{itemize}
 ```{r, message = FALSE, cache = TRUE}
-nih1 = read_csv("Bioinformatics Meta Data 2009+.csv", guess_max = 1000000)
+nih1 = read_csv("Bioinformatics_Meta_Data_2009+.csv", guess_max = 1000000)
 nih1 = (
   nih1 %>% mutate(PAC = substr(PCC, 1, 4),
                   PO = substr(PCC, 5, 6))
 )
 
-nih2 = read_csv("Bioinformatics Text Data 2009+.csv", guess_max = 1000000)
+nih2 = read_csv("Bioinformatics_Text_Data_2009+.csv", guess_max = 1000000)
 
 nih = inner_join(nih1, nih2)
 nih = data.frame(nih)
@@ -656,6 +656,6 @@ p2 = (
 
 #str(p2)
 
-write_csv(p2, "B1 Active R01 Equivalent Grants.csv")
+write_csv(p2, "B1_Active_R01_Equivalent_Grants.csv")
 ```
 
