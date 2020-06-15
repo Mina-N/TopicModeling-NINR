@@ -7,9 +7,3 @@
 3. What is the value of an improved decision? **Less time binning grant applications, more accurate and nuanced clasifications of grants, more precise alignment of research portfolios and NINR's Strategic Plan with applicant interests**
 
 
-**Question 2**
-1. To answer question 2, we will first define NINR's historically funded research areas. 
-2. We will select NLP algorithms to extract topics from research grants. 
-3. We will select performance metrics to assess the topic groupings.
-4. We will use the NLP algorithms to extract topics from research grants and use the performance metrics to evaluate the topic groupings.
-5. We will create visualizations of the topic groupings.
