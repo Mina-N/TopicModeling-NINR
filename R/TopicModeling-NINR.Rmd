@@ -56,7 +56,6 @@ nrow(awardedNINR19)
 table(awardedNINR19$Type)
 table(awardedNINR19$Actv)
 table(awardedNINR19$PCC)
-table(awardedNINR19$Project)
 ```
 
 Let's restrict to R01 equivalents
@@ -75,19 +74,20 @@ Let's create a text variable.
 ```{r}
 text = c("Title", "Abstract Text (only)", "SA Text")
 
+colnames(awardedNINR19)[14] <- "Abstract"
+awardedNINR19 <- awardedNINR19[awardedNINR19$Abstract != "-",]
 awardedNINR19$Text <- awardedNINR19[[text[1]]]
 if(length(text) > 1){
   for(i in 2:length(text)){
     awardedNINR19$Text <- paste(awardedNINR19$Text, awardedNINR19[[text[i]]])
-    print(i)
   }
 }
-print(substr(awardedNINR19[1, "Text"], 1000, 11000))
 
-awardedNINR19 = select(awardedNINR19, -c("Title", "Abstract Text (only)", "SA Text"))
+awardedNINR19 = select(awardedNINR19, -c("Title", "Abstract", "SA Text"))
 awardedNINR19 = mutate(awardedNINR19, Text = ifelse(is.na(Text), "", Text))
 awardedNINR19 = filter(awardedNINR19, Text != "")
 
+nrow(awardedNINR19)
 cat("Sections used:", text, "\n\n")
 ```
 
@@ -130,19 +130,9 @@ awardedNINR19$Text = str_trim(awardedNINR19$Text, side = "both")
 ```
 
 ### Unique Text
-
-Let's only keep applications with unique text.
 ```{r}
-awardedNINR19 = (
-  awardedNINR19 %>% group_by(Text)
-      %>% arrange(desc(Project))
-      %>% filter(row_number() == 1)
-      %>% ungroup()
-      %>% data.frame()
-)
-
+awardedNINR19 <- awardedNINR19[!duplicated(awardedNINR19[ , c("Text")]),]
 nrow(awardedNINR19)
-
 ```
 
 
