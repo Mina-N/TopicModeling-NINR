@@ -287,7 +287,6 @@ Let's load the optimal parameters.
 ```{r}
 pp = read_csv("LDA_Opt_Param_NINR.csv")
 pp = data.frame(pp)
-
 str(pp)
 ```
 
@@ -351,6 +350,38 @@ colnames(k1) = paste0("Topic", 1:t1)
 
 #str(k1)
 ```
+
+Derive acronyms using lookup table
+```{r}
+acronym_lookup <- data.frame("Acronym" = c("pa", "smm", "hf", "plwh", "t2dm", "msm", "fsw", "hana", "acp", "cds", "cqa", "cci", "comt",
+                                           "bpsd", "pwd", "fc", "eolpc", "pcrc", "cmc", "4_bpsd", "pes", "mcc", "hhc", "dts", "cri",
+                                           "vte", "pru", "cbpr", "cbt", "trkb", "lbp", "trkb_t1", "oa", "eol"),  
+                            "Derivation" = c("physical activity", "severe maternal morbidity ", "heart failure", "persons living with HIV",
+                                             "type 2 diabetes mellitus", "men who have sex with men", "female sex worker", "HIV-associated non-AIDS conditions",
+                                             "advance care planning", "clinical decision support", "communication quality analysis", "chronic critical illness",
+                                             "catechol-O-methyltransferase", "behavioral and psychological symptoms of dementia", "persons with dementia", "fecal calprotectin",
+                                             "end of life and palliative care", "Palliative Care Research Consortium", "children with medical complexity",
+                                             "behavioral and psychological symptoms of dementia", "patient engagement specialist", "multiple chronic conditions", 
+                                             "home healthcare", "disinfection tracking system", "cardiorespiratory instability", "Venous thromboembolism", "pruritis",
+                                             "community-based participatory research", "cognitive behavioral therapy", "tropomyosin-related receptor kinase type B", 
+                                             "lower back pain", "truncated isoform of Trkb", "osteoarthritis", "end of life"))
+
+
+for (row in 1:nrow(k)) {
+  for (col in 1:ncol(k)) {
+    for (row_acro in 1:nrow(acronym_lookup)) {
+      if (as.String(k[row, col]) == as.String(acronym_lookup[row_acro, 1])) {
+        k[row, col] <- as.String(acronym_lookup[row_acro, 2])
+      }
+    }
+  }
+}
+  
+k
+
+```
+
+
 
 ## LDAvis
 
