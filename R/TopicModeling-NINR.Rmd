@@ -391,12 +391,20 @@ lda_model$plot()
 
 \newpage
 
+## Rename Columns
+```{r}
+names(awardedNINR19)[names(awardedNINR19) == 'PI Name'] <- 'PI.Name'
+names(awardedNINR19)[names(awardedNINR19) == 'PO Name'] <- 'PO.Name'
+names(awardedNINR19)[names(awardedNINR19) == 'RFA/PA Number'] <- 'RFA.PA.Number'
+names(awardedNINR19)[names(awardedNINR19) == 'Stat Desc'] <- 'Stat.Desc'
+```
 
 ## 2D Plots
 
 Here we dimensionally reduce the feature vectors of each grant to two dimensions using the t-distributed Stochastic Neighbor Embedding (t-SNE) algorithm and plot each grant in the reduced 2D space.
 
 ```{r, message = FALSE, warning = FALSE, fig.height = 4.1}
+
 p = inner_join(select(awardedNINR19, Project:PO.Name), d)
 
 n = names(p)
@@ -606,6 +614,6 @@ p2 = (
    #                           Title, '")'))
 )
 
-write_csv(p2, "awarded-grants-NINR-2019-topics.csv")
+write_csv(p2, "awarded-grants-NINR-2019-topics-no-SA.csv")
 ```
 
