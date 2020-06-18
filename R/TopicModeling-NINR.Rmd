@@ -72,7 +72,7 @@ table(awardedNINR19_r01$Actv)
 
 Let's create a text variable.
 ```{r}
-text = c("Title", "Abstract Text (only)", "SA Text")
+text = c("Title", "Abstract Text (only)")
 
 colnames(awardedNINR19)[14] <- "Abstract"
 awardedNINR19 <- awardedNINR19[awardedNINR19$Abstract != "-",]
