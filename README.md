@@ -20,9 +20,9 @@ Select any of the five branches to read more about them in their respective READ
 3. What is the value of an improved decision? **Affirmation of the current "hands on" approach for program officer assignments, less time binning grant applications into research categories, more accurate and nuanced clasifications of grants, more precise alignment of NINR's research portfolios and Strategic Plan with applicant interests**
 
 ## Pre-Installation Instructions
-- Make sure you have the package manager pip installed on your local machine:
+* Install the package manager pip on your local machine.
 
-- Install an IDE that supports R and/or Python (I use RStudio and PyCharm).
+* Install an IDE that supports R and/or Python (I use RStudio and PyCharm).
 
 ## Installation Instructions for a Windows Machine
 1. Clone the web URL of this repository into a directory of your choice on your local machine:
@@ -33,9 +33,10 @@ Select any of the five branches to read more about them in their respective READ
 3. To run the R code, navigate to the R directory and open up the Rmd file in your favorite IDE (such as RStudio). 
 
 4. To run the Python code, navigate to the Python directory. Then, create a virtual environment in this directory:
-- Run '' on the command prompt to create a virtual environment that supports Python 3 development.
-- Run '' on the command prompt.
-- 
+* Run 'py -m venv env' on the command prompt to create a virtual environment that supports Python 3 development. This command will create a directory named 'env'.
+* To activate the virtual environment, run '.\env\scripts\activate' on the command prompt.
+* Once the virtual environment is activated, run 'pip install -r requirements.txt' to install the Python libraries that this repository depends on.
+* You're all set! Now run 'jupyter notebook' to activate the IPython Notebook.
 
 
 
