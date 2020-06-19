@@ -3,14 +3,15 @@
 ## Overview
 This repository contains implementations of the algorithm Latent Dirichlet Allocation in Python and R. It builds off the work of (1) Alaz Sengul, a 2019 Software Engineering Intern within the Office of Program Planning, Analysis, and Evaluation at the National Institutes of Health and (2) Nathan Moore, a Data Scientist at the Office of the Director. 
 
-This repository currently contains five branches:
+This repository currently contains six branches:
 1. master
 2. alaz
 3. awardedNINR19_compPythonR_iter2
 4. awardedNINR19_iter1
 5. awardedNINR19_noSA_iter3
+6. awardedNIA19_iter1
 
-Select any of the five branches to read more about them in their respective README files. The master branch serves as a foundation for understanding the other four. 
+Select any of the six branches to read more about them in their respective README files. The master branch serves as a foundation for understanding the other five. 
 
 ## Research Questions
 1. Who is the decision-maker? **National Institute of Nursing Research (NINR) leadership, policy analysts, communications, and other staff**
