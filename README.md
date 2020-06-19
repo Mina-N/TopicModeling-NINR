@@ -1,7 +1,7 @@
 # TopicModeling-NINR
 
 ## Overview
-You are currently on the 'awardedNINR19_noSA_iter3' branch. This branch was created off of the 'awardedNINR19_compPythonR_iter2' branch to produce topic groupings from abstract and title text of NINR grants that were awarded in 2019. This branch excludes specific aims from the analysis.
+You are currently on the 'awardedNIA19_iter1' branch. This branch was created off of the 'awardedNINR19_noSA_iter3' branch. It has been modified to create topic models from grant applications for the National Institute of Aging in 2019.
 
 ## Pre-Installation Instructions
 * Install the package manager pip on your local machine.
