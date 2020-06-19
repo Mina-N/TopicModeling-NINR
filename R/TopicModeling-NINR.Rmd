@@ -50,12 +50,17 @@ First we load the data of NINR grants awarded in 2019.  We pull four sources of 
 \item S - Specific Aims (SA) Text
 \end{itemize}x
 ```{r, message = FALSE, cache = TRUE}
-awardedNINR19 = read_excel("./../data/awarded-grants-NINR-2019.xlsx", guess_max = 1000000)
-nrow(awardedNINR19)
+new_NIA19 = read_excel("./../data/awarded-new-apps-NIA-2019.xlsx", guess_max = 1000000)
+competing_NIA19 = read_excel("./../data/competing-awarded-grants-NIA-2019.xlsx", guess_max = 1000000)
+noncompeting_NIA19 = read_excel("./../data/non-competing-awarded-grants-NIA-2019.xlsx", guess_max = 1000000)
+noncompeting_cont_NIA19 = read_excel("./../data/non-competing-continuations-NIA-2019.xlsx", guess_max = 1000000)
 
-table(awardedNINR19$Type)
-table(awardedNINR19$Actv)
-table(awardedNINR19$PCC)
+nia_1 <- rbind(noncompeting_NIA19, competing_NIA19) # does not have PCC field
+nia_2 <- rbind(new_NIA19, noncompeting_cont_NIA19)
+drops <- c("PCC")
+nia_2 <- nia_2[ , !(names(nia_2) %in% drops)]
+nia <- rbind(nia_1, nia_2)
+
 ```
 
 Let's restrict to R01 equivalents
