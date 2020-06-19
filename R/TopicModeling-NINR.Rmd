@@ -59,21 +59,28 @@ table(awardedNINR19$PCC)
 table(awardedNINR19$Project)
 ```
 
+## Rename Columns
+```{r}
+names(awardedNINR19)[names(awardedNINR19) == 'PI Name'] <- 'PI.Name'
+names(awardedNINR19)[names(awardedNINR19) == 'PO Name'] <- 'PO.Name'
+names(awardedNINR19)[names(awardedNINR19) == 'RFA/PA Number'] <- 'RFA.PA.Number'                                                                                  
+names(awardedNINR19)[names(awardedNINR19) == 'Stat Desc'] <- 'Stat.Desc'                                                                                          
+names(awardedNINR19)[names(awardedNINR19) == 'Abstract Text (only)'] <- 'Abstract' 
+```
+
 Let's restrict to R01 equivalents
 
 ```{r}
-r01 = c("DP1", "DP2", "DP5", "R01", "R35", "R37", "R56", "RF1", "RL1", "U01")
-
-awardedNINR19_r01 = filter(awardedNINR19, Actv %in% r01)
-
-table(awardedNINR19_r01$Actv)
+#r01 = c("DP1", "DP2", "DP5", "R01", "R35", "R37", "R56", "RF1", "RL1", "U01")
 ```
 
 ## Text Variable
 
 Let's create a text variable.
 ```{r}
-text = c("Title", "Abstract Text (only)", "SA Text")
+text = c("Title", "Abstract", "SA Text")
+awardedNINR19 <- awardedNINR19[awardedNINR19$Abstract != "-",]
+awardedNINR19$Text <- awardedNINR19[[text[1]]]
 
 awardedNINR19$Text <- awardedNINR19[[text[1]]]
 if(length(text) > 1){
@@ -84,7 +91,7 @@ if(length(text) > 1){
 }
 print(substr(awardedNINR19[1, "Text"], 1000, 11000))
 
-awardedNINR19 = select(awardedNINR19, -c("Title", "Abstract Text (only)", "SA Text"))
+awardedNINR19 = select(awardedNINR19, -c("Title", "Abstract", "SA Text"))
 awardedNINR19 = mutate(awardedNINR19, Text = ifelse(is.na(Text), "", Text))
 awardedNINR19 = filter(awardedNINR19, Text != "")
 
@@ -133,13 +140,7 @@ awardedNINR19$Text = str_trim(awardedNINR19$Text, side = "both")
 
 Let's only keep applications with unique text.
 ```{r}
-awardedNINR19 = (
-  awardedNINR19 %>% group_by(Text)
-      %>% arrange(desc(Project))
-      %>% filter(row_number() == 1)
-      %>% ungroup()
-      %>% data.frame()
-)
+awardedNINR19 <- awardedNINR19[!duplicated(awardedNINR19[ , c("Text")]),]
 
 nrow(awardedNINR19)
 
@@ -362,6 +363,31 @@ colnames(k1) = paste0("Topic", 1:t1)
 #str(k1)
 ```
 
+# Derive Acronyms Using Lookup Table
+```{r}
+acronym_lookup <- data.frame("Acronym" = c("pa", "smm", "hf", "plwh", "t2dm", "msm", "fsw", "hana", "acp", "cds", "cqa", "cci", "comt", "bpsd", "pwd", "fc", "eolpc", "pcrc", "cmc", "4_bpsd", "pes", "mcc",
+                                           "hhc", "dts", "cri", "vte", "pru", "cbpr", "cbt", "trkb", "lbp", "trkb_t1", "oa", "eol"), 
+                             "Derivation" = c("physical activity", "severe maternal morbidity ", "heart failure", "persons living with HIV", "type 2 diabetes mellitus", "men who have sex with men", "female
+                                              sex worker", "HIV-associated non-AIDS conditions", "advance care planning", "clinical decision support", "communication quality analysis", "chronic critical
+                                              illness", "catechol-O-methyltransferase", "behavioral and psychological symptoms of dementia", "persons with dementia", "fecal calprotectin", "end of life and
+                                              palliative care", "Palliative Care Research Consortium", "children with medical complexity", "behavioral and psychological symptoms of dementia", "patient
+                                              engagement specialist", "multiple chronic conditions", "home healthcare", "disinfection tracking system", "cardiorespiratory instability", "Venous
+                                              thromboembolism", "pruritis", "community-based participatory research", "cognitive behavioral therapy", "tropomyosin-related receptor kinase type B", "lower
+                                              back pain", "truncated isoform of Trkb", "osteoarthritis", "end of life"))                                                                                                                                                         
+  
+  
+for (row in 1:nrow(k)) {
+  for (col in 1:ncol(k)) {
+    for (row_acro in 1:nrow(acronym_lookup)) {
+      if (as.String(k[row, col]) == as.String(acronym_lookup[row_acro, 1])) {
+        k[row, col] <- as.String(acronym_lookup[row_acro, 2])
+      }
+    }
+  }
+  }
+k
+```
+
 ## LDAvis
 
 ```{r}
@@ -397,7 +423,7 @@ dts2 = rename(dts2, PO.Name = PO.Name)
  (
     ggplot(dts2, aes(x = V1, y = V2, col = Topic1))
   + geom_point()
-  + ggtitle("Most Likley Topic of Each Grant in Term Frequency Space")
+  + ggtitle("Most Likely Topic of Each Grant in Term Frequency Space")
   + theme_minimal()
   + theme(legend.position = "bottom",
           plot.title = element_text(hjust = 0.5),
