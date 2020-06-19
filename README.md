@@ -6,8 +6,8 @@ This repository contains implementations of the algorithm Latent Dirichlet Alloc
 This repository currently contains six branches:
 1. master
 2. alaz
-3. awardedNINR19_compPythonR_iter2
-4. awardedNINR19_iter1
+3. awardedNINR19_iter1
+4. awardedNINR19_compPythonR_iter2
 5. awardedNINR19_noSA_iter3
 6. awardedNIA19_iter1
 
