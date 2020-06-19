@@ -76,22 +76,22 @@ Let's restrict to R01 equivalents
 
 Let's create a text variable.
 ```{r}
-text = c("Title", "Abstract Text (only)")
+text = c("Title", "Abstract Text (only)", "SA Text")
 
-colnames(awardedNINR19)[14] <- "Abstract"
-awardedNINR19 <- awardedNINR19[awardedNINR19$Abstract != "-",]
-awardedNINR19$Text <- awardedNINR19[[text[1]]]
+colnames(nia)[14] <- "Abstract"
+nia <- nia[nia$Abstract != "-",]
+nia$Text <- nia[[text[1]]]
 if(length(text) > 1){
   for(i in 2:length(text)){
-    awardedNINR19$Text <- paste(awardedNINR19$Text, awardedNINR19[[text[i]]])
+    nia$Text <- paste(nia$Text, nia[[text[i]]])
   }
 }
 
-awardedNINR19 = select(awardedNINR19, -c("Title", "Abstract", "SA Text"))
-awardedNINR19 = mutate(awardedNINR19, Text = ifelse(is.na(Text), "", Text))
-awardedNINR19 = filter(awardedNINR19, Text != "")
+nia = select(nia, -c("Title", "Abstract", "SA Text"))
+nia = mutate(nia, Text = ifelse(is.na(Text), "", Text))
+nia = filter(nia, Text != "")
 
-nrow(awardedNINR19)
+nrow(nia)
 cat("Sections used:", text, "\n\n")
 ```
 
@@ -100,43 +100,43 @@ cat("Sections used:", text, "\n\n")
 Let's clean up the text by making everything lowercase, removing punctuation, etc.
 ```{r}
 # Remove weird characters
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "\n", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "\r", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "'", "")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "-", " ")
+nia$Text = str_replace_all(nia$Text, "\n", " ")
+nia$Text = str_replace_all(nia$Text, "\r", " ")
+nia$Text = str_replace_all(nia$Text, "'", "")
+nia$Text = str_replace_all(nia$Text, "-", " ")
 
 # Replace non-alpha numeric characters with a space
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "[^abcdefghijklmnopqrstuvwxyzABCDEFHIJKLMNOPQRSTUVWXZ0123456789 ]", " ")
+nia$Text = str_replace_all(nia$Text, "[^abcdefghijklmnopqrstuvwxyzABCDEFHIJKLMNOPQRSTUVWXZ0123456789 ]", " ")
 
 # Put everything in lowercase
-awardedNINR19$Text = tolower(awardedNINR19$Text)
+nia$Text = tolower(nia$Text)
 
 # Remove a few select words and extra spaces
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "abstract", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "project", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "proposal", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "summary", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "narrative", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "background", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "supplement", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "significance", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "overall", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "title", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "specific aims", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "goal", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "research plan", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "overview", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "\\s+", " ")
-awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "description provided by applicant", " ")
+nia$Text = str_replace_all(nia$Text, "abstract", " ")
+nia$Text = str_replace_all(nia$Text, "project", " ")
+nia$Text = str_replace_all(nia$Text, "proposal", " ")
+nia$Text = str_replace_all(nia$Text, "summary", " ")
+nia$Text = str_replace_all(nia$Text, "narrative", " ")
+nia$Text = str_replace_all(nia$Text, "background", " ")
+nia$Text = str_replace_all(nia$Text, "supplement", " ")
+nia$Text = str_replace_all(nia$Text, "significance", " ")
+nia$Text = str_replace_all(nia$Text, "overall", " ")
+nia$Text = str_replace_all(nia$Text, "title", " ")
+nia$Text = str_replace_all(nia$Text, "specific aims", " ")
+nia$Text = str_replace_all(nia$Text, "goal", " ")
+nia$Text = str_replace_all(nia$Text, "research plan", " ")
+nia$Text = str_replace_all(nia$Text, "overview", " ")
+nia$Text = str_replace_all(nia$Text, "\\s+", " ")
+nia$Text = str_replace_all(nia$Text, "description provided by applicant", " ")
 
-awardedNINR19$Text = str_trim(awardedNINR19$Text, side = "both")
+nia$Text = str_trim(nia$Text, side = "both")
 
 ```
 
 ### Unique Text
 ```{r}
-awardedNINR19 <- awardedNINR19[!duplicated(awardedNINR19[ , c("Text")]),]
-nrow(awardedNINR19)
+nia <- nia[!duplicated(nia[ , c("Text")]),]
+nrow(nia)
 ```
 
 
@@ -144,8 +144,8 @@ nrow(awardedNINR19)
 
 Let's build a Document-Term Matrix (DTM).
 ```{r}
-setDT(awardedNINR19)
-setkey(awardedNINR19, Project)
+setDT(nia)
+setkey(nia, Project)
 ```
 
 
@@ -157,10 +157,10 @@ stem_tokenizer =function(x) {
   word_tokenizer(x) %>% lapply(SnowballC::wordStem, language="en") 
   }
 
-it = itoken(awardedNINR19$Text,
+it = itoken(nia$Text,
             #tokenizer = word_tokenizer, 
             tokenizer = stem_tokenizer,
-            ids = awardedNINR19$Project, 
+            ids = nia$Project, 
             progressbar = FALSE)
 
 stop = stopwords(kind = "SMART")
@@ -397,10 +397,10 @@ lda_model$plot()
 
 ## Rename Columns
 ```{r}
-names(awardedNINR19)[names(awardedNINR19) == 'PI Name'] <- 'PI.Name'
-names(awardedNINR19)[names(awardedNINR19) == 'PO Name'] <- 'PO.Name'
-names(awardedNINR19)[names(awardedNINR19) == 'RFA/PA Number'] <- 'RFA.PA.Number'
-names(awardedNINR19)[names(awardedNINR19) == 'Stat Desc'] <- 'Stat.Desc'
+names(nia)[names(nia) == 'PI Name'] <- 'PI.Name'
+names(nia)[names(nia) == 'PO Name'] <- 'PO.Name'
+names(nia)[names(nia) == 'RFA/PA Number'] <- 'RFA.PA.Number'
+names(nia)[names(nia) == 'Stat Desc'] <- 'Stat.Desc'
 ```
 
 ## 2D Plots
@@ -409,7 +409,7 @@ Here we dimensionally reduce the feature vectors of each grant to two dimensions
 
 ```{r, message = FALSE, warning = FALSE, fig.height = 4.1}
 
-p = inner_join(select(awardedNINR19, Project:PO.Name), d)
+p = inner_join(select(nia, Project:PO.Name), d)
 
 n = names(p)
 n1 = names(select(p, Project:Topic2))
