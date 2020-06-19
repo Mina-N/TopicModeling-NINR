@@ -66,6 +66,15 @@ rm(nia_2)
 
 ```
 
+## Rename Columns
+```{r}
+names(nia)[names(nia) == 'PI Name'] <- 'PI.Name'
+names(nia)[names(nia) == 'PO Name'] <- 'PO.Name'
+names(nia)[names(nia) == 'RFA/PA Number'] <- 'RFA.PA.Number'
+names(nia)[names(nia) == 'Stat Desc'] <- 'Stat.Desc'
+names(nia)[names(nia) == 'Abstract Text (only)'] <- 'Abstract'
+```
+
 Let's restrict to R01 equivalents
 
 ```{r}
@@ -76,11 +85,11 @@ Let's restrict to R01 equivalents
 
 Let's create a text variable.
 ```{r}
-text = c("Title", "Abstract Text (only)", "SA Text")
+text = c("Title", "Abstract", "SA Text")
 
-colnames(nia)[14] <- "Abstract"
 nia <- nia[nia$Abstract != "-",]
 nia$Text <- nia[[text[1]]]
+
 if(length(text) > 1){
   for(i in 2:length(text)){
     nia$Text <- paste(nia$Text, nia[[text[i]]])
@@ -221,7 +230,7 @@ UNCOMMENT THIS CODE TO FIND THE OPTIMAL PARAMETERS AGAIN
 ```{r}
  as = c(0.05, 10^(-5:5))
  bs = c(0.05, 10^(-5:5))
- topics = 3:8
+ topics = 10:35
  
  pp = NULL
  
@@ -284,12 +293,12 @@ UNCOMMENT THIS CODE TO FIND THE OPTIMAL PARAMETERS AGAIN
  cat("\n\n")
  
  pp
- write_csv(pp, "LDA_Opt_Param_NINR.csv")
+ write_csv(pp, "LDA_Opt_Param_NIA.csv")
 ```
 
 Let's load the optimal parameters.
 ```{r}
-pp = read_csv("LDA_Opt_Param_NINR.csv")
+pp = read_csv("LDA_Opt_Param_NIA.csv")
 pp = data.frame(pp)
 str(pp)
 ```
@@ -394,14 +403,6 @@ lda_model$plot()
 ```
 
 \newpage
-
-## Rename Columns
-```{r}
-names(nia)[names(nia) == 'PI Name'] <- 'PI.Name'
-names(nia)[names(nia) == 'PO Name'] <- 'PO.Name'
-names(nia)[names(nia) == 'RFA/PA Number'] <- 'RFA.PA.Number'
-names(nia)[names(nia) == 'Stat Desc'] <- 'Stat.Desc'
-```
 
 ## 2D Plots
 
@@ -618,6 +619,6 @@ p2 = (
    #                           Title, '")'))
 )
 
-write_csv(p2, "awarded-grants-NINR-2019-topics-no-SA.csv")
+write_csv(p2, "awarded-grants-NIA-2019-topics.csv")
 ```
 
