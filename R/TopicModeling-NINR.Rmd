@@ -426,7 +426,7 @@ dts2 = rename(dts2, PO.Name = PO.Name)
  (
     ggplot(dts2, aes(x = V1, y = V2, col = Topic1))
   + geom_point()
-  + ggtitle("Most Likley Topic of Each Grant in Term Frequency Space")
+  + ggtitle("Most Likely Topic of Each Grant in Term Frequency Space")
   + theme_minimal()
   + theme(legend.position = "bottom",
           plot.title = element_text(hjust = 0.5),
