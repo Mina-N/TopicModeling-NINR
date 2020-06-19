@@ -61,16 +61,15 @@ drops <- c("PCC")
 nia_2 <- nia_2[ , !(names(nia_2) %in% drops)]
 nia <- rbind(nia_1, nia_2)
 
+rm(nia_1)
+rm(nia_2)
+
 ```
 
 Let's restrict to R01 equivalents
 
 ```{r}
-r01 = c("DP1", "DP2", "DP5", "R01", "R35", "R37", "R56", "RF1", "RL1", "U01")
-
-awardedNINR19_r01 = filter(awardedNINR19, Actv %in% r01)
-
-table(awardedNINR19_r01$Actv)
+#r01 = c("DP1", "DP2", "DP5", "R01", "R35", "R37", "R56", "RF1", "RL1", "U01")
 ```
 
 ## Text Variable
