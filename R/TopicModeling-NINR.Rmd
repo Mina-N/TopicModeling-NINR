@@ -390,15 +390,25 @@ for (row in 1:nrow(k)) {
       }
     }
   }
-  }
+}
+
 k
 ```
 
 ### Calculate term frequency with DTM
 
 ```{r}
-m
 
+term_frequency_pre_LDA <- k
+for (row in 1:nrow(term_frequency_pre_LDA)) {
+  for (col in 1:ncol(term_frequency_pre_LDA)) {
+    if (find_dtm(term_frequency_pre_LDA[row, col], m)) {
+      term_frequency_pre_LDA[row, col] <-  paste(term_frequency_pre_LDA[row, col], as.String(match_dtm(term_frequency_pre_LDA[row, col], m)), sep= ", ")
+    }
+  }
+}
+
+term_frequency_pre_LDA
 
 ```
 
