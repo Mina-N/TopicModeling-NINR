@@ -82,7 +82,6 @@ text = c("Title", "Abstract", "SA Text")
 awardedNINR19 <- awardedNINR19[awardedNINR19$Abstract != "-",]
 awardedNINR19$Text <- awardedNINR19[[text[1]]]
 
-awardedNINR19$Text <- awardedNINR19[[text[1]]]
 if(length(text) > 1){
   for(i in 2:length(text)){
     awardedNINR19$Text <- paste(awardedNINR19$Text, awardedNINR19[[text[i]]])
@@ -216,6 +215,9 @@ dtm = create_dtm(it, vectorizer)
 #identical(rownames(dtm), as.character(nih$AID))
 
 cat("DTM dimensions:", dim(dtm))
+
+m <- as.matrix(dtm)
+#write.csv(m, file = 'dtm_awardedNINR19.csv')
 ```
 
 ## Topic Modeling
@@ -601,7 +603,8 @@ p2 = (
                T4 = round(100*T4, 2),
                T5 = round(100*T5, 2),
                T6 = round(100*T6, 2),
-               T7 = round(100*T7, 2))
+               T7 = round(100*T7, 2),
+               T8 = round(100*T8, 2))
    # TODO: Include Title in file
    # %>% mutate(Title = paste0('=HYPERLINK(', 
    #                           '"https://apps.era.nih.gov/qvr/web/dd_abstract.cfm?ApplId=', 
