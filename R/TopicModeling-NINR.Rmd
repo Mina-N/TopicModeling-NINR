@@ -215,7 +215,11 @@ dtm = create_dtm(it, vectorizer)
 #identical(rownames(dtm), as.character(nih$AID))
 
 cat("DTM dimensions:", dim(dtm))
+```
 
+### Write DTM to file
+
+```{r}
 m <- as.matrix(dtm)
 #write.csv(m, file = 'dtm_awardedNINR19.csv')
 ```
@@ -388,6 +392,14 @@ for (row in 1:nrow(k)) {
   }
   }
 k
+```
+
+### Calculate term frequency with DTM
+
+```{r}
+m
+
+
 ```
 
 ## LDAvis
