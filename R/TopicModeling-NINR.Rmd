@@ -38,8 +38,8 @@ library(text2vec)
 library(tm)
 library(SnowballC)
 library(rARPACK)
+library(ggupset)
 ```
-
 
 ## Load Data
 
@@ -401,16 +401,11 @@ find_dtm <- function(word, word_matrix) {
   cond = 0
   freq = 0
   for (col in colnames(word_matrix)) {
-    #print(col)
-    #print(as.String(word))
     if (grepl(word, col)) {
       cond = 1
       freq <- freq + sum(word_matrix[, col])
-      print('got here')
     }
   }   
-  print(cond)
-  print(freq)
   return(list(cond=cond, freq=freq))
 }
 
@@ -662,3 +657,39 @@ p2 = (
 write_csv(p2, "awarded-grants-NINR-2019-topics.csv")
 ```
 
+## ggupset plots
+
+```{r}
+
+topic_list <- function(x) {
+  top_list <- c()
+  index = 0
+  row <- x[n2]
+  for (i in 1: length(row)) {
+    if (row[i] >= 50) {
+      top_list <- append(top_list, n2[i])
+      index = index + 1
+    }
+  }
+  return(top_list)
+}
+
+vals <- apply(p2, 1, function(x) topic_list(x))
+p2$TopicList <- vals
+
+str(p2)
+
+p2 %>%
+  distinct(Project, .keep_all=TRUE) %>%
+  ggplot(aes(x=TopicList)) +
+    geom_bar() +
+    scale_x_upset()
+
+```
+
+
+
+
+
+
+    
