@@ -395,15 +395,38 @@ for (row in 1:nrow(k)) {
 k
 ```
 
+### Term frequency functions
+```{r}
+find_dtm <- function(word, word_matrix) {
+  cond = 0
+  freq = 0
+  for (col in colnames(word_matrix)) {
+    #print(col)
+    #print(as.String(word))
+    if (grepl(word, col)) {
+      cond = 1
+      freq <- freq + sum(word_matrix[, col])
+      print('got here')
+    }
+  }   
+  print(cond)
+  print(freq)
+  return(list(cond=cond, freq=freq))
+}
+
+```
+
+
 ### Calculate term frequency with DTM
 
 ```{r}
-
 term_frequency_pre_LDA <- k
 for (row in 1:nrow(term_frequency_pre_LDA)) {
   for (col in 1:ncol(term_frequency_pre_LDA)) {
-    if (find_dtm(term_frequency_pre_LDA[row, col], m)) {
-      term_frequency_pre_LDA[row, col] <-  paste(term_frequency_pre_LDA[row, col], as.String(match_dtm(term_frequency_pre_LDA[row, col], m)), sep= ", ")
+    #print(term_frequency_pre_LDA[row, col])
+    term <- find_dtm(term_frequency_pre_LDA[row, col], m)
+    if (term$cond == 1) {
+      term_frequency_pre_LDA[row, col] <-  paste(term_frequency_pre_LDA[row, col], as.String(term$freq), sep= ", ")
     }
   }
 }
