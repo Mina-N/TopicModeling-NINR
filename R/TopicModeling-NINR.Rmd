@@ -50,12 +50,12 @@ First we load the data of NINR grants awarded in 2019.  We pull four sources of 
 \item S - Specific Aims (SA) Text
 \end{itemize}x
 ```{r, message = FALSE, cache = TRUE}
-awardedNINR19 = read_excel("./../data/awarded-grants-NINR-2019.xlsx", guess_max = 1000000)
-not_awardedNINR19 = read_excel("./../data/not-awarded-grants-NINR-2019.xlsx", guess_max = 1000000)
+ninr = read_excel("./../data/NINR-2015-all-apps-with-RCDC.xlsx", guess_max = 1000000)
+#not_awardedNINR19 = read_excel("./../data/not-awarded-grants-NINR-2019.xlsx", guess_max = 1000000)
 
-ninr <- rbind(awardedNINR19, not_awardedNINR19)
-rm(awardedNINR19)
-rm(not_awardedNINR19)
+#ninr <- rbind(awardedNINR19, not_awardedNINR19)
+#rm(awardedNINR19)
+#rm(not_awardedNINR19)
 ```
 
 ## Rename Columns
@@ -658,7 +658,7 @@ p2 = (
    #                           Title, '")'))
 )
 
-write_csv(p2, "NINR-2019-topics.csv")
+write_csv(p2, "NINR-2015-topics.csv")
 ```
 
 ## ggupset plots
