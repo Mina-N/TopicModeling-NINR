@@ -51,6 +51,7 @@ First we load the data of NINR grants awarded in 2019.  We pull four sources of 
 \end{itemize}x
 ```{r, message = FALSE, cache = TRUE}
 ninr = read_excel("./../data/NINR-2015-all-apps-with-RCDC.xlsx", guess_max = 1000000)
+#awardedNINR19 = read_excel("./../data/awarded-grants-NINR-2019.xlsx", guess_max = 1000000)
 #not_awardedNINR19 = read_excel("./../data/not-awarded-grants-NINR-2019.xlsx", guess_max = 1000000)
 
 #ninr <- rbind(awardedNINR19, not_awardedNINR19)
@@ -77,7 +78,7 @@ Let's restrict to R01 equivalents
 
 Let's create a text variable.
 ```{r}
-text = c("Title", "Abstract", "SA Text")
+text = c("Title", "Abstract")
 ninr <- ninr[ninr$Abstract != "-",]
 ninr$Text <- ninr[[text[1]]]
 
@@ -658,7 +659,7 @@ p2 = (
    #                           Title, '")'))
 )
 
-write_csv(p2, "NINR-2015-topics.csv")
+write_csv(p2, "NINR-noSA-2015-topics.csv")
 ```
 
 ## ggupset plots
@@ -670,7 +671,7 @@ topic_list <- function(x) {
   index = 0
   row <- x[n2]
   for (i in 1: length(row)) {
-    if (row[i] >= 33.33) {
+    if (as.double(row[i]) >= 33.33) {
       top_list <- append(top_list, n2[i])
       index = index + 1
     }
@@ -679,20 +680,23 @@ topic_list <- function(x) {
 }
 
 vals <- apply(p2, 1, function(x) topic_list(x))
-p2$TopicList <- vals
 
-p2_exclude <- p2[p2$TopicList == 'NULL',]
+if (!is.null(vals)) {
+  p2$TopicList <- vals
+  
+  p2_exclude <- p2[p2$TopicList == 'NULL',]
 
-p2 %>%
-  distinct(Project, .keep_all=TRUE) %>%
-  ggplot(aes(x=TopicList)) +
-    geom_bar() +
-    scale_x_upset()
+  p2 %>%
+    distinct(Project, .keep_all=TRUE) %>%
+    ggplot(aes(x=TopicList)) +
+      geom_bar() +
+      scale_x_upset()
 
-print('Number of grants before applying threshold: ')
-print(nrow(p2))
-print('Number of grants after applying threshold: ')
-print(nrow(p2) - nrow(p2_exclude))
+  #print('Number of grants before applying threshold: ')
+  #print(nrow(p2))
+  #print('Number of grants after applying threshold: ')
+  #print(nrow(p2) - nrow(p2_exclude))
+}
 
 ```
 
