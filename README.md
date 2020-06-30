@@ -1,7 +1,7 @@
 # TopicModeling-NINR
 
 ## Overview
-You are currently on the 'awardedNINR19_iter1' branch. This branch modifies Alaz and Nate's original code to work with NINR awarded research grants in 2019.
+You are currently on the 'novelStudy19' branch. This branch modifies the awarded NINR19_iter1 branch to create additional topic models for grants that were not awarded in 2019. Furthermore, this branch only analyzes grants that contain the words 'the first study'. 
 
 ## Pre-Installation Instructions
 * Install the package manager pip on your local machine.
