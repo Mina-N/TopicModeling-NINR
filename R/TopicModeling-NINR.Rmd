@@ -655,7 +655,14 @@ p2 = (
                T5 = round(100*T5, 2),
                T6 = round(100*T6, 2),
                T7 = round(100*T7, 2),
-               T8 = round(100*T8, 2))
+               T8 = round(100*T8, 2),
+               T9 = round(100*T9, 2),
+               T10 = round(100*T10, 2),
+               T11 = round(100*T11, 2),
+               T12 = round(100*T12, 2),
+               T13 = round(100*T13, 2),
+               T14 = round(100*T14, 2),
+               T15 = round(100*T15, 2))
    # TODO: Include Title in file
    # %>% mutate(Title = paste0('=HYPERLINK(', 
    #                           '"https://apps.era.nih.gov/qvr/web/dd_abstract.cfm?ApplId=', 
@@ -665,7 +672,7 @@ p2 = (
    #                           Title, '")'))
 )
 
-write_csv(p2, "awarded-grants-NINR-2019-topics.csv")
+write_csv(p2, "NINR-2015-2019-15-topics.csv")
 ```
 
 ## ggupset plots
@@ -677,7 +684,7 @@ topic_list <- function(x) {
   index = 0
   row <- x[n2]
   for (i in 1: length(row)) {
-    if (row[i] >= 50) {
+    if (as.double(row[i]) >= 33.33) {
       top_list <- append(top_list, n2[i])
       index = index + 1
     }
@@ -686,15 +693,22 @@ topic_list <- function(x) {
 }
 
 vals <- apply(p2, 1, function(x) topic_list(x))
-p2$TopicList <- vals
 
-str(p2)
-
-p2 %>%
-  distinct(Project, .keep_all=TRUE) %>%
-  ggplot(aes(x=TopicList)) +
-    geom_bar() +
-    scale_x_upset()
+if (!is.null(vals)) {
+  p2$TopicList <- vals
+  p2_exclude <- p2[p2$TopicList == 'NULL',]
+  
+  p2 %>%
+    distinct(Project, .keep_all=TRUE) %>%
+    ggplot(aes(x=TopicList, y=FY)) +
+      geom_violin() +
+      scale_x_upset(order_by = "freq")
+  
+  #print('Number of grants before applying threshold: ')
+  #print(nrow(p2))
+  #print('Number of grants after applying threshold: ')
+  #print(nrow(p2) - nrow(p2_exclude))
+}
 
 ```
 
