@@ -321,7 +321,7 @@ str(pp)
 
 Now we choose the desired number of topic.
 ```{r, message = FALSE, warining = FALSE}
-topic = 8
+topic = 15
 
 pp1 = filter(pp, Topics == topic)
 a1 = pp1$Alpha
