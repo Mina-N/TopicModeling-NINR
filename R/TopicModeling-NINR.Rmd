@@ -50,9 +50,9 @@ First we load the data of NINR grants awarded in 2019.  We pull four sources of 
 \item S - Specific Aims (SA) Text
 \end{itemize}x
 ```{r, message = FALSE, cache = TRUE}
-ninr = read_excel("./../data/NINR-2015-all-apps-with-RCDC.xlsx", guess_max = 1000000)
-#awardedNINR19 = read_excel("./../data/awarded-grants-NINR-2019.xlsx", guess_max = 1000000)
-#not_awardedNINR19 = read_excel("./../data/not-awarded-grants-NINR-2019.xlsx", guess_max = 1000000)
+#ninr = read_excel("./../data/NINR-2015-all-apps-with-RCDC.xlsx", guess_max = 1000000)
+awardedNINR19 = read_excel("./../data/awarded-grants-NINR-2019.xlsx", guess_max = 1000000)
+not_awardedNINR19 = read_excel("./../data/not-awarded-grants-NINR-2019.xlsx", guess_max = 1000000)
 
 #ninr <- rbind(awardedNINR19, not_awardedNINR19)
 #rm(awardedNINR19)
@@ -61,11 +61,17 @@ ninr = read_excel("./../data/NINR-2015-all-apps-with-RCDC.xlsx", guess_max = 100
 
 ## Rename Columns
 ```{r}
-names(ninr)[names(ninr) == 'PI Name'] <- 'PI.Name'
-names(ninr)[names(ninr) == 'PO Name'] <- 'PO.Name'
-names(ninr)[names(ninr) == 'RFA/PA Number'] <- 'RFA.PA.Number'                                                                                  
-names(ninr)[names(ninr) == 'Stat Desc'] <- 'Stat.Desc'                                                                                          
-names(ninr)[names(ninr) == 'Abstract Text (only)'] <- 'Abstract' 
+names(awardedNINR19 )[names(awardedNINR19 ) == 'PI Name'] <- 'PI.Name'
+names(awardedNINR19 )[names(awardedNINR19 ) == 'PO Name'] <- 'PO.Name'
+names(awardedNINR19 )[names(awardedNINR19 ) == 'RFA/PA Number'] <- 'RFA.PA.Number'                                                                                  
+names(awardedNINR19 )[names(awardedNINR19 ) == 'Stat Desc'] <- 'Stat.Desc'                                                                                          
+names(awardedNINR19 )[names(awardedNINR19 ) == 'Abstract Text (only)'] <- 'Abstract' 
+
+names(not_awardedNINR19)[names(not_awardedNINR19) == 'PI Name'] <- 'PI.Name'
+names(not_awardedNINR19)[names(not_awardedNINR19) == 'PO Name'] <- 'PO.Name'
+names(not_awardedNINR19)[names(not_awardedNINR19) == 'RFA/PA Number'] <- 'RFA.PA.Number'                                                                                  
+names(not_awardedNINR19)[names(not_awardedNINR19) == 'Stat Desc'] <- 'Stat.Desc'                                                                                          
+names(not_awardedNINR19)[names(not_awardedNINR19) == 'Abstract Text (only)'] <- 'Abstract' 
 ```
 
 Let's restrict to R01 equivalents
@@ -78,70 +84,134 @@ Let's restrict to R01 equivalents
 
 Let's create a text variable.
 ```{r}
-text = c("Title", "Abstract")
-ninr <- ninr[ninr$Abstract != "-",]
-ninr$Text <- ninr[[text[1]]]
+text = c("Title", "Abstract", "SA Text")
+awardedNINR19 <- awardedNINR19[awardedNINR19$Abstract != "-",]
+awardedNINR19$Text <- awardedNINR19[[text[1]]]
 
 if(length(text) > 1){
   for(i in 2:length(text)){
-    ninr$Text <- paste(ninr$Text, ninr[[text[i]]])
+    awardedNINR19$Text <- paste(awardedNINR19$Text, awardedNINR19[[text[i]]])
     print(i)
   }
 }
-print(substr(ninr[1, "Text"], 1000, 11000))
+print(substr(awardedNINR19[1, "Text"], 1000, 11000))
 
-ninr = select(ninr, -c("Title", "Abstract", "SA Text"))
-ninr = mutate(ninr, Text = ifelse(is.na(Text), "", Text))
-ninr = filter(ninr, Text != "")
+awardedNINR19 = select(awardedNINR19, -c("Title", "Abstract", "SA Text"))
+awardedNINR19 = mutate(awardedNINR19, Text = ifelse(is.na(Text), "", Text))
+awardedNINR19 = mutate(awardedNINR19, Text = ifelse(grepl("the first study", Text, fixed = TRUE), Text, ""))
+awardedNINR19 = filter(awardedNINR19, Text != "")
+
+
+
+
+text = c("Title", "Abstract", "SA Text")
+not_awardedNINR19 <- not_awardedNINR19[not_awardedNINR19$Abstract != "-",]
+not_awardedNINR19$Text <- not_awardedNINR19[[text[1]]]
+
+if(length(text) > 1){
+  for(i in 2:length(text)){
+    not_awardedNINR19$Text <- paste(not_awardedNINR19$Text, not_awardedNINR19[[text[i]]])
+    print(i)
+  }
+}
+print(substr(not_awardedNINR19[1, "Text"], 1000, 11000))
+
+not_awardedNINR19 = select(not_awardedNINR19, -c("Title", "Abstract", "SA Text"))
+not_awardedNINR19 = mutate(not_awardedNINR19, Text = ifelse(is.na(Text), "", Text))
+not_awardedNINR19 = mutate(not_awardedNINR19, Text = ifelse(grepl("the first study", Text, fixed = TRUE), Text, ""))
+not_awardedNINR19 = filter(not_awardedNINR19, Text != "")
 
 cat("Sections used:", text, "\n\n")
+
+
+
 ```
 
-### Clean Up Text
+### Clean Up Text for Awarded Text
 
 Let's clean up the text by making everything lowercase, removing punctuation, etc.
 ```{r}
 # Remove weird characters
-ninr$Text = str_replace_all(ninr$Text, "\n", " ")
-ninr$Text = str_replace_all(ninr$Text, "\r", " ")
-ninr$Text = str_replace_all(ninr$Text, "'", "")
-ninr$Text = str_replace_all(ninr$Text, "-", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "\n", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "\r", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "'", "")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "-", " ")
 
 # Replace non-alpha numeric characters with a space
-ninr$Text = str_replace_all(ninr$Text, "[^abcdefghijklmnopqrstuvwxyzABCDEFHIJKLMNOPQRSTUVWXZ0123456789 ]", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "[^abcdefghijklmnopqrstuvwxyzABCDEFHIJKLMNOPQRSTUVWXZ0123456789 ]", " ")
 
 # Put everything in lowercase
-ninr$Text = tolower(ninr$Text)
+awardedNINR19$Text = tolower(awardedNINR19$Text)
 
 # Remove a few select words and extra spaces
-ninr$Text = str_replace_all(ninr$Text, "abstract", " ")
-ninr$Text = str_replace_all(ninr$Text, "project", " ")
-ninr$Text = str_replace_all(ninr$Text, "proposal", " ")
-ninr$Text = str_replace_all(ninr$Text, "summary", " ")
-ninr$Text = str_replace_all(ninr$Text, "narrative", " ")
-ninr$Text = str_replace_all(ninr$Text, "background", " ")
-ninr$Text = str_replace_all(ninr$Text, "supplement", " ")
-ninr$Text = str_replace_all(ninr$Text, "significance", " ")
-ninr$Text = str_replace_all(ninr$Text, "overall", " ")
-ninr$Text = str_replace_all(ninr$Text, "title", " ")
-ninr$Text = str_replace_all(ninr$Text, "specific aims", " ")
-ninr$Text = str_replace_all(ninr$Text, "goal", " ")
-ninr$Text = str_replace_all(ninr$Text, "research plan", " ")
-ninr$Text = str_replace_all(ninr$Text, "overview", " ")
-ninr$Text = str_replace_all(ninr$Text, "\\s+", " ")
-ninr$Text = str_replace_all(ninr$Text, "description provided by applicant", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "abstract", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "project", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "proposal", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "summary", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "narrative", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "background", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "supplement", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "significance", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "overall", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "title", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "specific aims", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "goal", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "research plan", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "overview", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "\\s+", " ")
+awardedNINR19$Text = str_replace_all(awardedNINR19$Text, "description provided by applicant", " ")
 
-ninr$Text = str_trim(ninr$Text, side = "both")
+awardedNINR19$Text = str_trim(awardedNINR19$Text, side = "both")
 
 ```
+
+### Clean Up Text for Not Awarded Text
+```{r}
+# Remove weird characters
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "\n", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "\r", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "'", "")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "-", " ")
+
+# Replace non-alpha numeric characters with a space
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "[^abcdefghijklmnopqrstuvwxyzABCDEFHIJKLMNOPQRSTUVWXZ0123456789 ]", " ")
+
+# Put everything in lowercase
+not_awardedNINR19$Text = tolower(not_awardedNINR19$Text)
+
+# Remove a few select words and extra spaces
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "abstract", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "project", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "proposal", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "summary", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "narrative", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "background", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "supplement", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "significance", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "overall", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "title", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "specific aims", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "goal", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "research plan", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "overview", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "\\s+", " ")
+not_awardedNINR19$Text = str_replace_all(not_awardedNINR19$Text, "description provided by applicant", " ")
+
+not_awardedNINR19$Text = str_trim(not_awardedNINR19$Text, side = "both")
+
+```
+
+
 
 ### Unique Text
 
 Let's only keep applications with unique text.
 ```{r}
-ninr <- ninr[!duplicated(ninr[ , c("Text")]),]
+awardedNINR19 <- awardedNINR19[!duplicated(awardedNINR19[ , c("Text")]),]
+nrow(awardedNINR19)
 
-nrow(ninr)
+not_awardedNINR19 <- not_awardedNINR19[!duplicated(not_awardedNINR19[ , c("Text")]),]
+nrow(not_awardedNINR19)
 
 ```
 
@@ -150,8 +220,8 @@ nrow(ninr)
 
 Let's build a Document-Term Matrix (DTM).
 ```{r}
-setDT(ninr)
-setkey(ninr, Project)
+setDT(not_awardedNINR19)
+setkey(not_awardedNINR19, Project)
 ```
 
 
@@ -163,10 +233,10 @@ stem_tokenizer =function(x) {
   word_tokenizer(x) %>% lapply(SnowballC::wordStem, language="en") 
   }
 
-it = itoken(ninr$Text,
+it = itoken(not_awardedNINR19$Text,
             #tokenizer = word_tokenizer, 
             tokenizer = stem_tokenizer,
-            ids = ninr$Project, 
+            ids = not_awardedNINR19$Project, 
             progressbar = FALSE)
 
 stop = stopwords(kind = "SMART")
@@ -297,12 +367,12 @@ UNCOMMENT THIS CODE TO FIND THE OPTIMAL PARAMETERS AGAIN
  cat("\n\n")
  
  pp
- write_csv(pp, "LDA_Opt_Param_NINR.csv")
+ write_csv(pp, "LDA_Opt_Param_not_awardedNINR19_novelStudy.csv")
 ```
 
 Let's load the optimal parameters.
 ```{r}
-pp = read_csv("LDA_Opt_Param_NINR.csv")
+pp = read_csv("LDA_Opt_Param_not_awardedNINR19_novelStudy.csv")
 pp = data.frame(pp)
 
 str(pp)
@@ -310,7 +380,7 @@ str(pp)
 
 Now we choose the desired number of topic.
 ```{r, message = FALSE, warining = FALSE}
-topic = 13
+topic = 15
 
 pp1 = filter(pp, Topics == topic)
 a1 = pp1$Alpha
