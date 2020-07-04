@@ -234,7 +234,7 @@ UNCOMMENT THIS CODE TO FIND THE OPTIMAL PARAMETERS AGAIN
 ```{r}
  as = c(0.05, 10^(-5:5))
  bs = c(0.05, 10^(-5:5))
- topics = 3:8
+ topics = 3:15
  
  pp = NULL
  
@@ -297,12 +297,12 @@ UNCOMMENT THIS CODE TO FIND THE OPTIMAL PARAMETERS AGAIN
  cat("\n\n")
  
  pp
- write_csv(pp, "LDA_Opt_Param_NINR.csv")
+ write_csv(pp, "LDA_Opt_Param_NINR19.csv")
 ```
 
 Let's load the optimal parameters.
 ```{r}
-pp = read_csv("LDA_Opt_Param_NINR.csv")
+pp = read_csv("LDA_Opt_Param_NINR19.csv")
 pp = data.frame(pp)
 
 str(pp)
