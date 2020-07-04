@@ -50,21 +50,10 @@ First we load the data of NINR grants awarded in 2019.  We pull four sources of 
 \item S - Specific Aims (SA) Text
 \end{itemize}x
 ```{r, message = FALSE, cache = TRUE}
-ninr19 = read_excel("./../data/NINR-2019-all-apps-with-RCDC.xlsx", guess_max = 1000000)
-ninr18 = read_excel("./../data/NINR-2018-all-apps-with-RCDC.xlsx", guess_max = 1000000)
-ninr17 = read_excel("./../data/NINR-2017-all-apps-with-RCDC.xlsx", guess_max = 1000000)
-ninr16 = read_excel("./../data/NINR-2016-all-apps-with-RCDC.xlsx", guess_max = 1000000)
-ninr15 = read_excel("./../data/NINR-2015-all-apps-with-RCDC.xlsx", guess_max = 1000000)
+ninr = read_excel("./../data/NINR-2019-all-apps-with-RCDC.xlsx", guess_max = 1000000)
 
-ninr = rbind(ninr19, ninr18, ninr17, ninr16, ninr15)
 
 # TODO: keep PCC in ninr dataframe in the future
-
-rm(ninr19)
-rm(ninr18)
-rm(ninr17)
-rm(ninr16)
-rm(ninr15)
 
 
 ```
@@ -684,7 +673,7 @@ topic_list <- function(x) {
   index = 0
   row <- x[n2]
   for (i in 1: length(row)) {
-    if (as.double(row[i]) >= 33.33) {
+    if (as.double(row[i]) >= 50) {
       top_list <- append(top_list, n2[i])
       index = index + 1
     }
@@ -693,6 +682,8 @@ topic_list <- function(x) {
 }
 
 vals <- apply(p2, 1, function(x) topic_list(x))
+
+p2$FY <- ninr$FY
 
 if (!is.null(vals)) {
   p2$TopicList <- vals
