@@ -245,7 +245,7 @@ UNCOMMENT THIS CODE TO FIND THE OPTIMAL PARAMETERS AGAIN
 ```{r}
  as = c(0.05, 10^(-5:5))
  bs = c(0.05, 10^(-5:5))
- topics = 3:8
+ topics = 13:15
  
  pp = NULL
  
@@ -308,12 +308,12 @@ UNCOMMENT THIS CODE TO FIND THE OPTIMAL PARAMETERS AGAIN
  cat("\n\n")
  
  pp
- write_csv(pp, "LDA_Opt_Param_NINR.csv")
+ write_csv(pp, "LDA_Opt_Param_NINR_15_19.csv")
 ```
 
 Let's load the optimal parameters.
 ```{r}
-pp = read_csv("LDA_Opt_Param_NINR.csv")
+pp = read_csv("LDA_Opt_Param_NINR_15_19.csv")
 pp = data.frame(pp)
 
 str(pp)
@@ -321,7 +321,7 @@ str(pp)
 
 Now we choose the desired number of topic.
 ```{r, message = FALSE, warining = FALSE}
-topic = 15
+topic = 13
 
 pp1 = filter(pp, Topics == topic)
 a1 = pp1$Alpha
@@ -660,9 +660,7 @@ p2 = (
                T10 = round(100*T10, 2),
                T11 = round(100*T11, 2),
                T12 = round(100*T12, 2),
-               T13 = round(100*T13, 2),
-               T14 = round(100*T14, 2),
-               T15 = round(100*T15, 2))
+               T13 = round(100*T13, 2))
    # TODO: Include Title in file
    # %>% mutate(Title = paste0('=HYPERLINK(', 
    #                           '"https://apps.era.nih.gov/qvr/web/dd_abstract.cfm?ApplId=', 
