@@ -531,13 +531,6 @@ RCDC_key <- read_excel("../data/NINR-2019-all-apps-with-RCDC.xlsx")
 ```
 
 
-### Check Overlap with PCC Keywords
-```{r}
-PCC_key <- read_excel("../data/PCC_keywords.xlsx", header = F)
-
-```
-
-
 ### Term frequency functions
 ```{r}
 find_dtm <- function(word, word_matrix) {
