@@ -400,29 +400,135 @@ k
 kris_key <- read.delim("../data/kris_keywords.txt", header=F)
 kris_overlap <- list()
 index <- 1
+count <- 0
+flag <- 0
 
 for (row_kris in 1:nrow(kris_key)) {
   for (row in 1:nrow(k)) {
     for (col in 1:ncol(k)) {
-      if (grepl(tolower(as.String(k[row, col])), tolower(as.String(kris_key[row_kris,])), fixed=TRUE) | grepl(tolower(as.String(kris_key[row_kris,])), tolower(as.String(k[row, col])), fixed=TRUE)) {
+      k_word <- str_replace_all(k[row, col], "_", " ")
+      if (grepl(tolower(as.String(k_word)), tolower(as.String(kris_key[row_kris,])), fixed=TRUE) | grepl(tolower(as.String(kris_key[row_kris,])), tolower(as.String(k_word)), fixed=TRUE)) {
         kris_overlap[index] <- tolower(as.String(kris_key[row_kris,]))
         index <- index + 1
+        flag <- 1
       }
     }
   }
+  if (flag == 1) {
+    count <- count + 1
+  }
+  flag <- 0
 }
-
-kris_overlap
 
 length(kris_overlap)
 
-length(k)
-
 (length(kris_overlap) / length(k)) * 100
+
+(count / nrow(kris_key)) * 100
+
+lapply(kris_overlap, write, "kris_overlap.txt", append=TRUE)
 ```
 
+### Format PCC_key
+```{r}
+# Read in PCC keywords file
+PCC_key <- read_excel("../data/PCC_keywords.xlsx", col_names = FALSE)
+
+# Remove weird characters
+PCC_key$...2 = str_replace_all(PCC_key$...2, "\n", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "\r", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "'", "")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "-", " ")
+
+# Replace non-alpha numeric characters with a space
+PCC_key$...2 = str_replace_all(PCC_key$...2, "[^abcdefghijklmnopqrstuvwxyzABCDEFHIJKLMNOPQRSTUVWXZ0123456789 ]", " ")
+
+# Put everything in lowercase
+PCC_key$...2 = tolower(PCC_key$...2)
+
+# Remove a few select words and extra spaces
+PCC_key$...2 = str_replace_all(PCC_key$...2, "abstract", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "project", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "proposal", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "summary", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "narrative", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "background", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "supplement", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "significance", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "overall", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "title", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "specific aims", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "goal", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "research plan", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "overview", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "\\s+", " ")
+PCC_key$...2 = str_replace_all(PCC_key$...2, "description provided by applicant", " ")
+
+PCC_key$...2 = str_trim(PCC_key$...2, side = "both")
+
+```
+
+### Check Overlap with PCC Keywords
+```{r}
+
+PCC_overlap <- list()
+pcc_list <- list()
+topic_keywords_list <- list()
+index <- 1
+count <- 0
+flag <- 0
+find <- 0
+                 
+for (row_PCC in 1:nrow(PCC_key)) {
+  for (row in 1:nrow(k)) {
+    for (col in 1:ncol(k)) {
+      k_word <- invisible(str_replace_all(k[row, col], "_", " "))
+      PCC_text <- invisible(as.list(scan(text=as.character(PCC_key[row_PCC, 2]), what='', sep=' ')))
+      for (index_PCC in 1: length(PCC_text)) {
+        word <- PCC_text[index_PCC]
+        location <- gregexpr(pattern = tolower(as.String(k_word)), as.String(word))[[1]]
+        if (location > 0) {
+          print(word)
+          print(k_word)
+        }
+        if (grepl(tolower(as.String(k_word)), tolower(as.String(PCC_key[row_PCC, 2])), fixed=TRUE) && (as.double(location / nchar(as.String(word))) < 0.5 && location > 0 && !(k_word %in% c("eh", "sm", "sca", "eh", "af", "ic", "asp")))) {
+          PCC_overlap[index] <- tolower(as.String(PCC_key[row_PCC, 2]))
+          pcc_list[index] <- PCC_key[row_PCC, 1]
+          topic_keywords_list[index] <- k_word
+          index <- index + 1
+          flag <- 1
+          break
+        }
+      }
+    }
+  }
+  if (flag == 1) {
+    count <- count + 1
+  }
+  flag <- 0
+}
+
+keywords_overlap <- data.frame("PCC" = I(pcc_list), "Topic_Keywords"= I(topic_keywords_list))
+
+# Create unique keywords_overlap
+unique_keywords_overlap <- keywords_overlap[!duplicated(keywords_overlap[ , c("Topic_Keywords")]),]
+
+count
+
+PCC_overlap
+
+keywords_overlap
+
+unique_keywords_overlap
+
+```
+
+### Check Overlap with RCDC Categories
+```{r}
+RCDC_key <- read_excel("../data/NINR-2019-all-apps-with-RCDC.xlsx")
 
 
+```
 
 
 ### Term frequency functions
