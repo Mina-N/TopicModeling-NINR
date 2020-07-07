@@ -785,9 +785,7 @@ p2 = (
                T10 = round(100*T10, 2),
                T11 = round(100*T11, 2),
                T12 = round(100*T12, 2),
-               T13 = round(100*T13, 2),
-               T14 = round(100*T14, 2),
-               T15 = round(100*T15, 2))
+               T13 = round(100*T13, 2))
    # TODO: Include Title in file
    # %>% mutate(Title = paste0('=HYPERLINK(', 
    #                           '"https://apps.era.nih.gov/qvr/web/dd_abstract.cfm?ApplId=', 
@@ -797,7 +795,7 @@ p2 = (
    #                           Title, '")'))
 )
 
-write_csv(p2, "NINR-2015-2019-15-topics.csv")
+write_csv(p2, "NINR-2019-overlap-topics.csv")
 ```
 
 ## ggupset plots
