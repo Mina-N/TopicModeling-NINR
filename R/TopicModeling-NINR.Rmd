@@ -429,6 +429,7 @@ length(kris_overlap)
 lapply(kris_overlap, write, "kris_overlap.txt", append=TRUE)
 ```
 
+<<<<<<< HEAD
 ### Format PCC_key
 ```{r}
 # Read in PCC keywords file
@@ -531,6 +532,14 @@ RCDC_key <- read_excel("../data/NINR-2019-all-apps-with-RCDC.xlsx")
 ```
 
 
+=======
+### Check Overlap with PCC Keywords
+```{r}
+PCC_key <- read_excel("../data/PCC_keywords.xlsx", header = F)
+
+```
+
+>>>>>>> d31d29b22456713c21cbb285db6eee2035ca3186
 ### Term frequency functions
 ```{r}
 find_dtm <- function(word, word_matrix) {
