@@ -310,7 +310,7 @@ str(pp)
 
 Now we choose the desired number of topic.
 ```{r, message = FALSE, warining = FALSE}
-topic = 15
+topic = 13
 
 pp1 = filter(pp, Topics == topic)
 a1 = pp1$Alpha
@@ -340,7 +340,7 @@ d = data.frame(Project = row.names(d), d)
 colnames(d) = str_replace_all(names(d), "X", "T")
 
  for(i in 1:dim(d)[1]){
-    temp = names(sort(d[i, 2:dim(d)[2]], decreasing = TRUE))[1:2]
+    temp = names(sort(d[i, 2:dim(d)[2]], decreasing = TRUE))[1:2]           
     d[i, "Topic1"] = temp[1]
     d[i, "Topic2"] = temp[2]
  }
@@ -393,6 +393,45 @@ for (row in 1:nrow(k)) {
 }
 
 k
+```
+
+### Check Overlap with Kris Keywords
+```{r}
+kris_key <- read.delim("../data/kris_keywords.txt", header=F)
+kris_overlap <- list()
+index <- 1
+count <- 0
+flag <- 0
+
+for (row_kris in 1:nrow(kris_key)) {
+  for (row in 1:nrow(k)) {
+    for (col in 1:ncol(k)) {
+      if (grepl(tolower(as.String(k[row, col])), tolower(as.String(kris_key[row_kris,])), fixed=TRUE) | grepl(tolower(as.String(kris_key[row_kris,])), tolower(as.String(k[row, col])), fixed=TRUE)) {
+        kris_overlap[index] <- tolower(as.String(kris_key[row_kris,]))
+        index <- index + 1
+        flag <- 1
+      }
+    }
+  }
+  if (flag == 1) {
+    count <- count + 1
+  }
+  flag <- 0
+}
+
+length(kris_overlap)
+
+(length(kris_overlap) / length(k)) * 100
+
+(count / nrow(kris_key)) * 100
+
+lapply(kris_overlap, write, "kris_overlap.txt", append=TRUE)
+```
+
+### Check Overlap with PCC Keywords
+```{r}
+PCC_key <- read_excel("../data/PCC_keywords.xlsx", header = F)
+
 ```
 
 ### Term frequency functions
