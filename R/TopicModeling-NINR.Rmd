@@ -807,7 +807,7 @@ topic_list <- function(x) {
   index = 0
   row <- x[n2]
   for (i in 1: length(row)) {
-    if (as.double(row[i]) >= 50) {
+    if (as.double(row[i]) >= 33.33) {
       top_list <- append(top_list, n2[i])
       index = index + 1
     }
@@ -825,7 +825,7 @@ if (!is.null(vals)) {
   
   p2 %>%
     distinct(Project, .keep_all=TRUE) %>%
-    ggplot(aes(x=TopicList, y=FY)) +
+    ggplot(aes(x=TopicList)) +
       geom_violin() +
       scale_x_upset(order_by = "freq")
   
