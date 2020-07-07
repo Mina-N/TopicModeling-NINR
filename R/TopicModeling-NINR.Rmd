@@ -826,7 +826,7 @@ if (!is.null(vals)) {
   p2 %>%
     distinct(Project, .keep_all=TRUE) %>%
     ggplot(aes(x=TopicList)) +
-      geom_violin() +
+      geom_bar() +
       scale_x_upset(order_by = "freq")
   
   #print('Number of grants before applying threshold: ')
