@@ -511,22 +511,99 @@ for (row_PCC in 1:nrow(PCC_key)) {
 keywords_overlap <- data.frame("PCC" = I(pcc_list), "Topic_Keywords"= I(topic_keywords_list))
 
 # Create unique keywords_overlap
-unique_keywords_overlap <- keywords_overlap[!duplicated(keywords_overlap[ , c("Topic_Keywords")]),]
-
-count
+unique_keywords_overlap <- keywords_overlap[!duplicated(keywords_overlap[ , c("PCC")]),]
 
 PCC_overlap
 
-keywords_overlap
+length(unique(keywords_overlap$Topic_Keywords))
 
-unique_keywords_overlap
+keywords_overlap <- as.data.frame(lapply(keywords_overlap, unlist))
+
+keywords_overlap$Topic_Keywords <- as.factor(keywords_overlap$Topic_Keywords)
+
+keywords_overlap %>% 
+    group_by(Topic_Keywords) %>% 
+    count() %>%
+    arrange(desc(n))
+
+```
+### Create dataframe with grants, predominant topics, and RCDC concepts
+```{r}
+p = inner_join(select(ninr, Project:PO.Name), d)
+RCDC_concepts <- p
+RCDC_key <- read_excel("../data/NINR-2019-all-apps-with-RCDC.xlsx")
+RCDC_merge <- merge(RCDC_key, RCDC_concepts, by="Project")
+list_rcdc <- c()
+index <- 1
+
+#Convert RCDC categories column into list 
+
+RCDC_merge$`RCDC Concepts (Scaled)` = str_replace_all(RCDC_merge$`RCDC Concepts (Scaled)`, "//", " ")
 
 ```
 
+
 ### Check Overlap with RCDC Categories
 ```{r}
-RCDC_key <- read_excel("../data/NINR-2019-all-apps-with-RCDC.xlsx")
+topic_words <- character(nrow(RCDC_merge))
+projects <- list()
+rcdc <- list()
+index <- 1
 
+for (row in 1:nrow(RCDC_merge)) {
+  topic_num <- as.integer(as.list(scan(text=as.character(RCDC_merge[row, 'Topic1']), what='', sep='T'))[2])
+  topic_words[index] <- paste( unlist(k[, topic_num]), collapse=';')
+  index <- index + 1
+}
+
+RCDC_merge$TopicKeywords <- topic_words
+
+
+str(RCDC_merge[, 'RCDC Concepts (Scaled)'])
+str(RCDC_merge[, 'TopicKeywords'])
+
+# Compare keywords in RCDC Concepts (Scaled) column and TopicKeywords column
+
+index <- 1
+topic_words <- list()
+
+for (row in 1:nrow(RCDC_merge)) {
+  print(row)
+  topic_keywords <- strsplit(toString(RCDC_merge[row, 'TopicKeywords']),";") 
+  topic_keywords <- unlist(topic_keywords)
+  RCDC_keywords <- strsplit(toString(RCDC_merge[row, 'RCDC Concepts (Scaled)']), "[[:space:]]")
+  RCDC_keywords <- unlist(RCDC_keywords)
+  for (index_topic_keywords in 1: length(topic_keywords)) {
+    topic_word <- str_replace_all(topic_keywords[index_topic_keywords], "_", " ")
+    #print(topic_word)
+    for (index_RCDC_keywords in 1: length(RCDC_keywords)) {
+      RCDC_word <- RCDC_keywords[index_RCDC_keywords]
+      location <- gregexpr(pattern = tolower(as.String(topic_word)), as.String(RCDC_word))[[1]]
+      if (grepl(tolower(as.String(topic_word)), tolower(as.String(RCDC_word)), fixed=TRUE) && (as.double(location / nchar(as.String(RCDC_word))) < 0.5 && location > 0 && !(topic_word %in% c("eh", "sm", "sca", "eh", "af", "ic", "asp")))) {
+        projects[index] <- RCDC_merge[row, "Project"]
+        rcdc[index] <- RCDC_word
+        topic_words[index] <- topic_word
+        index <- index + 1
+      }
+    } 
+  }
+}
+
+
+keywords_overlap_RCDC <- data.frame("Project" = I(projects), "RCDC" = I(rcdc), "Topic_Keywords"= I(topic_words))
+
+
+length(unique(keywords_overlap_RCDC$Topic_Keywords))
+
+
+keywords_overlap_RCDC <- as.data.frame(lapply(keywords_overlap_RCDC, unlist))
+
+keywords_overlap_RCDC$Project <- as.factor(keywords_overlap_RCDC$Project)
+
+keywords_overlap_RCDC %>% 
+    group_by(Topic_Keywords) %>% 
+    count() %>% 
+    arrange(desc(n))
 
 ```
 
@@ -580,7 +657,6 @@ lda_model$plot()
 Here we dimensionally reduce the feature vectors of each grant to two dimensions using the t-distributed Stochastic Neighbor Embedding (t-SNE) algorithm and plot each grant in the reduced 2D space.
 
 ```{r, message = FALSE, warning = FALSE, fig.height = 4.1}
-p = inner_join(select(ninr, Project:PO.Name), d)
 
 n = names(p)
 n1 = names(select(p, Project:Topic2))
@@ -827,6 +903,8 @@ if (!is.null(vals)) {
     distinct(Project, .keep_all=TRUE) %>%
     ggplot(aes(x=TopicList)) +
       geom_bar() +
+      scale_x_continuous(breaks = round(seq(0, 200, by = 50),1)) +
+      scale_y_continuous(breaks = round(seq(0, 200, by = 50),1)) + 
       scale_x_upset(order_by = "freq")
   
   #print('Number of grants before applying threshold: ')
