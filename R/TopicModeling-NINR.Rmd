@@ -194,13 +194,13 @@ cat("Number of terms in vocabulary:", dim(vocab)[1])
 
 ```{r}
 # TODO: Create list of custom stopwords
-#paul1 = read_excel("B1_Round1_2019-12-06.xlsx", sheet = "Stopwords")
-#paul2 = read_excel("B1_Round2_2019-12-06.xlsx", sheet = "Stopwords")
-#paul = rbind(paul1, paul2)
-#paul = paul$Stopword
+paul1 = read_excel("B1_Round1_2019-12-06.xlsx", sheet = "Stopwords")
+paul2 = read_excel("B1_Round2_2019-12-06.xlsx", sheet = "Stopwords")
+paul = rbind(paul1, paul2)
+paul = paul$Stopword
 #print(paul)
 
-#vocab = filter(vocab, !(term %in% paul))
+vocab = filter(vocab, !(term %in% paul))
 #cat("\nNumber of terms in vocabulary:", dim(vocab)[1])
 ```
 
