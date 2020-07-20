@@ -639,8 +639,6 @@ for (row in 1:nrow(term_frequency_pre_LDA)) {
   }
 }
 
-term_frequency_pre_LDA
-
 ```
 
 ## LDAvis
