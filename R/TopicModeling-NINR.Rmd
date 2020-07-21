@@ -50,8 +50,8 @@ First we load the data of NINR grants awarded in 2019.  We pull four sources of 
 \item S - Specific Aims (SA) Text
 \end{itemize}x
 ```{r, message = FALSE, cache = TRUE}
-ninr = read_excel("./../data/NINR-2019-all-apps-with-RCDC.xlsx", guess_max = 1000000)
-
+ninr = read_excel("./../data/NINR_Translational.xlsx", guess_max = 1000000)
+nia = read_excel("./../data/NIA_Translational.xlsx", guess_max = 1000000)
 
 # TODO: keep PCC in ninr dataframe in the future
 
