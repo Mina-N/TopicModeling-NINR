@@ -31,7 +31,7 @@ library(readxl)
 library(ggplot2)
 library(Rtsne)
 
-## Text Mining Pacakges
+## Text Mining Packages
 library(data.table)
 library(Matrix)
 library(text2vec)
@@ -50,7 +50,12 @@ First we load the data of NINR grants awarded in 2019.  We pull four sources of 
 \item S - Specific Aims (SA) Text
 \end{itemize}x
 ```{r, message = FALSE, cache = TRUE}
-ninr = read_excel("./../data/NINR_Translational.xlsx", guess_max = 1000000)
+ninr_1 = read_excel("./../data/NINR_Translational.xlsx", guess_max = 1000000)
+ninr_2 = read_excel("./../data/NIA_Translational.xlsx", guess_max = 1000000)
+ninr = rbind(ninr_1, ninr_2)
+
+
+
 nia = read_excel("./../data/NIA_Translational.xlsx", guess_max = 1000000)
 
 # TODO: keep PCC in ninr dataframe in the future
@@ -60,12 +65,19 @@ nia = read_excel("./../data/NIA_Translational.xlsx", guess_max = 1000000)
 
 ## Rename Columns
 ```{r}
-names(ninr)[names(ninr) == 'PI Name'] <- 'PI.Name'
-names(ninr)[names(ninr) == 'PO Name'] <- 'PO.Name'
-names(ninr)[names(ninr) == 'RFA/PA Number'] <- 'RFA.PA.Number'                                                                                  
-names(ninr)[names(ninr) == 'Stat Desc'] <- 'Stat.Desc'                                                                                          
-names(ninr)[names(ninr) == 'Abstract Text (only)'] <- 'Abstract' 
-names(ninr)[names(ninr) == 'SA Text'] <- 'SA.Text' 
+rename <- function(institute) {
+  names(institute)[names(institute) == 'PI Name'] <- 'PI.Name'
+  names(institute)[names(institute) == 'PO Name'] <- 'PO.Name'
+  names(institute)[names(institute) == 'RFA/PA Number'] <- 'RFA.PA.Number'                                                                                 
+  names(institute)[names(institute) == 'Stat Desc'] <- 'Stat.Desc'                                                                                          
+  names(institute)[names(institute) == 'Abstract Text (only)'] <- 'Abstract' 
+  names(institute)[names(institute) == 'SA Text'] <- 'SA.Text' 
+  return(institute)
+}
+
+ninr <- rename(ninr)
+nia <- rename(nia)
+
 ```
 
 Let's restrict to R01 equivalents
@@ -78,60 +90,76 @@ Let's restrict to R01 equivalents
 
 Let's create a text variable.
 ```{r}
-text = c("Title", "Abstract", "SA.Text")
-ninr <- ninr[ninr$Abstract != "-",]
-ninr$Text <- ninr[[text[1]]]
+text_field <- function(institute) {
+  text = c("Title", "Abstract", "SA.Text")
+  institute <- institute[institute$Abstract != "-",]
+  institute$Text <- institute[[text[1]]]
 
-if(length(text) > 1){
-  for(i in 2:length(text)){
-    ninr$Text <- paste(ninr$Text, ninr[[text[i]]])
-    print(i)
+  if(length(text) > 1){
+    for(i in 2:length(text)){
+      institute$Text <- paste(institute$Text, institute[[text[i]]])
+      print(i)
+    }
   }
+  print(substr(institute[1, "Text"], 1000, 11000))
+
+  institute = select(institute, -c("Title", "Abstract", "SA.Text"))
+  institute = mutate(institute, Text = ifelse(is.na(Text), "", Text))
+  institute = filter(institute, Text != "")
+
+  cat("Sections used:", text, "\n\n")
+  return(institute)
 }
-print(substr(ninr[1, "Text"], 1000, 11000))
 
-ninr = select(ninr, -c("Title", "Abstract", "SA.Text"))
-ninr = mutate(ninr, Text = ifelse(is.na(Text), "", Text))
-ninr = filter(ninr, Text != "")
+ninr <- text_field(ninr)
+nia <- text_field(nia)
 
-cat("Sections used:", text, "\n\n")
 ```
 
 ### Clean Up Text
 
 Let's clean up the text by making everything lowercase, removing punctuation, etc.
 ```{r}
-# Remove weird characters
-ninr$Text = str_replace_all(ninr$Text, "\n", " ")
-ninr$Text = str_replace_all(ninr$Text, "\r", " ")
-ninr$Text = str_replace_all(ninr$Text, "'", "")
-ninr$Text = str_replace_all(ninr$Text, "-", " ")
 
-# Replace non-alpha numeric characters with a space
-ninr$Text = str_replace_all(ninr$Text, "[^abcdefghijklmnopqrstuvwxyzABCDEFHIJKLMNOPQRSTUVWXZ0123456789 ]", " ")
+clean_text <- function(institute) {
+  # Remove weird characters
+  institute$Text = str_replace_all(institute$Text, "\n", " ")
+  institute$Text = str_replace_all(institute$Text, "\r", " ")
+  institute$Text = str_replace_all(institute$Text, "'", "")
+  institute$Text = str_replace_all(institute$Text, "-", " ")
 
-# Put everything in lowercase
-ninr$Text = tolower(ninr$Text)
+  # Replace non-alpha numeric characters with a space
+  institute$Text = str_replace_all(institute$Text, "[^abcdefghijklmnopqrstuvwxyzABCDEFHIJKLMNOPQRSTUVWXZ0123456789 ]", " ")
 
-# Remove a few select words and extra spaces
-ninr$Text = str_replace_all(ninr$Text, "abstract", " ")
-ninr$Text = str_replace_all(ninr$Text, "project", " ")
-ninr$Text = str_replace_all(ninr$Text, "proposal", " ")
-ninr$Text = str_replace_all(ninr$Text, "summary", " ")
-ninr$Text = str_replace_all(ninr$Text, "narrative", " ")
-ninr$Text = str_replace_all(ninr$Text, "background", " ")
-ninr$Text = str_replace_all(ninr$Text, "supplement", " ")
-ninr$Text = str_replace_all(ninr$Text, "significance", " ")
-ninr$Text = str_replace_all(ninr$Text, "overall", " ")
-ninr$Text = str_replace_all(ninr$Text, "title", " ")
-ninr$Text = str_replace_all(ninr$Text, "specific aims", " ")
-ninr$Text = str_replace_all(ninr$Text, "goal", " ")
-ninr$Text = str_replace_all(ninr$Text, "research plan", " ")
-ninr$Text = str_replace_all(ninr$Text, "overview", " ")
-ninr$Text = str_replace_all(ninr$Text, "\\s+", " ")
-ninr$Text = str_replace_all(ninr$Text, "description provided by applicant", " ")
+  # Put everything in lowercase
+  institute$Text = tolower(institute$Text)
 
-ninr$Text = str_trim(ninr$Text, side = "both")
+  # Remove a few select words and extra spaces
+  institute$Text = str_replace_all(institute$Text, "abstract", " ")
+  institute$Text = str_replace_all(institute$Text, "project", " ")
+  institute$Text = str_replace_all(institute$Text, "proposal", " ")
+  institute$Text = str_replace_all(institute$Text, "summary", " ")
+  institute$Text = str_replace_all(institute$Text, "narrative", " ")
+  institute$Text = str_replace_all(institute$Text, "background", " ")
+  institute$Text = str_replace_all(institute$Text, "supplement", " ")
+  institute$Text = str_replace_all(institute$Text, "significance", " ")
+  institute$Text = str_replace_all(institute$Text, "overall", " ")
+  institute$Text = str_replace_all(institute$Text, "title", " ")
+  institute$Text = str_replace_all(institute$Text, "specific aims", " ")
+  institute$Text = str_replace_all(institute$Text, "goal", " ")
+  institute$Text = str_replace_all(institute$Text, "research plan", " ")
+  institute$Text = str_replace_all(institute$Text, "overview", " ")
+  institute$Text = str_replace_all(institute$Text, "\\s+", " ")
+  institute$Text = str_replace_all(institute$Text, "description provided by applicant", " ")
+
+  institute$Text = str_trim(institute$Text, side = "both")
+  
+  return(institute)
+}
+
+
+nia <- clean_text(nia)
+ninr <- clean_text(ninr)
 
 ```
 
@@ -139,9 +167,12 @@ ninr$Text = str_trim(ninr$Text, side = "both")
 
 Let's only keep applications with unique text.
 ```{r}
-ninr <- ninr[!duplicated(ninr[ , c("Text")]),]
-
-nrow(ninr)
+remove_duplicates <- function(institute) {
+  institute <- institute[!duplicated(institute[ , c("Text")]),]
+  return(institute)
+}
+nia <- remove_duplicates(nia)
+ninr <- remove_duplicates(ninr)
 
 ```
 
@@ -150,8 +181,15 @@ nrow(ninr)
 
 Let's build a Document-Term Matrix (DTM).
 ```{r}
-setDT(ninr)
-setkey(ninr, Project)
+build_dtm <- function(institute) {
+  setDT(institute)
+  setkey(institute, Project)
+  return(institute)
+}
+
+nia <- build_dtm(nia)
+ninr <- build_dtm(ninr)
+
 ```
 
 
@@ -159,69 +197,63 @@ setkey(ninr, Project)
 
 Let's build a vocabulary that uses stemming.
 ```{r}
-stem_tokenizer =function(x) {
-  word_tokenizer(x) %>% lapply(SnowballC::wordStem, language="en") 
+
+build_vocab <- function(institute) {
+  stem_tokenizer = function(x) {
+    word_tokenizer(x) %>% lapply(SnowballC::wordStem, language="en") 
   }
 
-it = itoken(ninr$Text,
-            #tokenizer = word_tokenizer, 
+  it = itoken(institute$Text,
             tokenizer = stem_tokenizer,
-            ids = ninr$Project, 
+            ids = institute$Project, 
             progressbar = FALSE)
 
-stop = stopwords(kind = "SMART")
-stop = str_replace_all(stop, "'", "")
+  stop = stopwords(kind = "SMART")
+  stop = str_replace_all(stop, "'", "")
 
-vocab = create_vocabulary(it, stopwords = stop, ngram = c(1L, 2L))
+  vocab = create_vocabulary(it, stopwords = stop, ngram = c(1L, 2L))
 
-cat("Number of terms in vocabulary:", dim(vocab)[1])
-#vocab %>% arrange(desc(term_count)) %>% head(20)
-```
-
-Let's prune the vocabulary by only including terms that appear at least 10 times.
-```{r}
-vocab = prune_vocabulary(vocab,
+  cat("Number of terms in vocabulary:", dim(vocab)[1])
+  #vocab %>% arrange(desc(term_count)) %>% head(20)
+  
+  vocab = prune_vocabulary(vocab,
                                 term_count_min = 10)
                                 #doc_count_min = 5,
                                 #doc_proportion_max = 0.9,
                                 #doc_proportion_min = 0.001)
 
-cat("Number of terms in vocabulary:", dim(vocab)[1])
-#vocab %>% arrange(desc(term_count)) %>% head(20)
-```
+  cat("Number of terms in vocabulary:", dim(vocab)[1])
+  
+  # TODO: Create list of custom stopwords
+  paul1 = read_excel("B1_Round1_2019-12-06.xlsx", sheet = "Stopwords")
+  paul2 = read_excel("B1_Round2_2019-12-06.xlsx", sheet = "Stopwords")
+  paul = rbind(paul1, paul2)
+  paul = paul$Stopword
+  #print(paul)
 
-### Extra Stop Words
+  vocab = filter(vocab, !(term %in% paul))
+  #cat("\nNumber of terms in vocabulary:", dim(vocab)[1])
 
-```{r}
-# TODO: Create list of custom stopwords
-paul1 = read_excel("B1_Round1_2019-12-06.xlsx", sheet = "Stopwords")
-paul2 = read_excel("B1_Round2_2019-12-06.xlsx", sheet = "Stopwords")
-paul = rbind(paul1, paul2)
-paul = paul$Stopword
-#print(paul)
+  vectorizer = vocab_vectorizer(vocab)
+  dtm = create_dtm(it, vectorizer)
 
-vocab = filter(vocab, !(term %in% paul))
-#cat("\nNumber of terms in vocabulary:", dim(vocab)[1])
-```
+  #identical(rownames(dtm), as.character(nih$AID))
 
+  cat("DTM dimensions:", dim(dtm))
+  
+  return(dtm)
+}
 
-### Build DTM
+nia_dtm <- build_vocab(nia)
+ninr_dtm <- build_vocab(ninr)
 
-Now let's build the DTM for the training data.
-```{r}
-vectorizer = vocab_vectorizer(vocab)
-dtm = create_dtm(it, vectorizer)
-
-#identical(rownames(dtm), as.character(nih$AID))
-
-cat("DTM dimensions:", dim(dtm))
 ```
 
 ### Write DTM to file
 
 ```{r}
-m <- as.matrix(dtm)
-#write.csv(m, file = 'dtm_ninr.csv')
+nia_dtm_matrix <- as.matrix(nia_dtm)
+ninr_dtm_matrix <- as.matrix(ninr_dtm)
 ```
 
 ## Topic Modeling
@@ -232,9 +264,11 @@ Here we use the most popular topic modeling algorithm, Latent Dirichlet Allocati
 
 UNCOMMENT THIS CODE TO FIND THE OPTIMAL PARAMETERS AGAIN
 ```{r}
+opt_param <- function(dtm, filename) {
+  
  as = c(0.05, 10^(-5:5))
  bs = c(0.05, 10^(-5:5))
- topics = 3:15
+ topics = 12:13
  
  pp = NULL
  
@@ -297,32 +331,40 @@ UNCOMMENT THIS CODE TO FIND THE OPTIMAL PARAMETERS AGAIN
  cat("\n\n")
  
  pp
- write_csv(pp, "LDA_Opt_Param_NINR19.csv")
+ write_csv(pp, filename)
+   
+}
+
+#opt_param(nia_dtm, "LDA_Opt_Param_NICHD_Prevention.csv")
+opt_param(ninr_dtm, "LDA_Opt_Param_NINR_NIA_Translational.csv")
+
 ```
 
 Let's load the optimal parameters.
 ```{r}
-pp = read_csv("LDA_Opt_Param_NINR19.csv")
-pp = data.frame(pp)
+pp_ninr = read_csv("LDA_Opt_Param_NINR_NIA_Translational.csv")
+pp_ninr = data.frame(pp_ninr)
 
-str(pp)
+pp_nia = read_csv("LDA_Opt_Param_NIA_Translational.csv")
+pp_nia = data.frame(pp_nia)
 ```
 
 Now we choose the desired number of topic.
 ```{r, message = FALSE, warining = FALSE}
-topic = 13
+#lda_run <- function(pp) {
+  topic = 13
 
-pp1 = filter(pp, Topics == topic)
-a1 = pp1$Alpha
-b1 = pp1$Beta
-t1 = pp1$Topics
+  pp1 = filter(pp_ninr, Topics == topic)
+  a1 = pp1$Alpha
+  b1 = pp1$Beta
+  t1 = pp1$Topics
 
-lda_model = LDA$new(doc_topic_prior = a1, 
+  lda_model = LDA$new(doc_topic_prior = a1, 
                     topic_word_prior = b1,
                     n_topics = t1)
 
-set.seed(123)
-doc_topic_distr = 
+  set.seed(123)
+  doc_topic_distr = 
      lda_model$fit_transform(x = dtm, 
                              n_iter = 1000, 
                              convergence_tol = 0.0001, 
@@ -330,44 +372,75 @@ doc_topic_distr =
                              progressbar = FALSE,
                              verbose = FALSE)
 
-topic_word_distr = lda_model$topic_word_distribution
+  topic_word_distr = lda_model$topic_word_distribution
 
 
-#cat("\n\n")
+  #cat("\n\n")
 
-d = as.matrix(doc_topic_distr)
-d = data.frame(Project = row.names(d), d)
-colnames(d) = str_replace_all(names(d), "X", "T")
+  d = as.matrix(doc_topic_distr)
+  d = data.frame(Project = row.names(d), d)
+  colnames(d) = str_replace_all(names(d), "X", "T")
 
- for(i in 1:dim(d)[1]){
-    temp = names(sort(d[i, 2:dim(d)[2]], decreasing = TRUE))[1:2]           
-    d[i, "Topic1"] = temp[1]
-    d[i, "Topic2"] = temp[2]
- }
+  for(i in 1:dim(d)[1]){
+      temp = names(sort(d[i, 2:dim(d)[2]], decreasing = TRUE))[1:2]           
+      d[i, "Topic1"] = temp[1]
+      d[i, "Topic2"] = temp[2]
+  }
 
-#d$Topic = factor(d$Topic)
+  #d$Topic = factor(d$Topic)
 
-l = dim(d)[2]
-d = d[, c(1, l-1,l, 4:l-2)]
+  l = dim(d)[2]
+  d = d[, c(1, l-1,l, 4:l-2)]
 
-cat("\n\n")
+  cat("\n\n")
 
-k = lda_model$get_top_words(n = 20, topic_number = 1:t1, lambda = 0.25)
+  k = lda_model$get_top_words(n = 20, topic_number = 1:t1, lambda = 0.25)
 
-k
+  k
 
-#cat("\n\n")
+  #cat("\n\n")
 
-#perplexity(dtm, topic_word_distr, doc_topic_distr)
+  #perplexity(dtm, topic_word_distr, doc_topic_distr)
 
-#cat("\n")
-table(d$Topic1)
+  #cat("\n")
+  table(d$Topic1)
 
-k1 = data.frame(k)
-colnames(k1) = paste0("Topic", 1:t1)
+  k1 = data.frame(k)
+  colnames(k1) = paste0("Topic", 1:t1)
 
-#str(k1)
+  str(k1)
+
+#  return(k)
+#}
+
+#k_nia <- lda_run(pp_nia)
+#k_ninr <- lda_run(pp_ninr)
 ```
+# LDAvis
+```{r}
+topics = 13
+dir.create(paste0("LDAvis_", topics))
+lda_model$plot(out.dir = paste0("LDAvis_", topics), open.browser = TRUE)
+
+```
+
+## Topic Order
+
+The topic order used by LDAvis is determined by the default circle area, $A_k$, described in the following PDF: https://rdrr.io/cran/LDAvis/f/inst/doc/details.pdf.  We can get the topic ordering directly from the JSON file that was created by LDAvis and reorder our topics.
+```{r}
+j = read_json(paste0("LDAvis_", topics, "/lda.json"))
+j = j$topic.order
+j = as.integer(j)
+
+
+k = lda_model$get_top_words(n = 20, topic_number = 1:topics, lambda = 1)
+k = k[, j]
+
+k1 = data.frame(k1)
+colnames(k1) = paste0("T", 1:topics)
+k1
+```
+
 
 # Derive Acronyms Using Lookup Table
 ```{r}
@@ -395,218 +468,53 @@ for (row in 1:nrow(k)) {
 k
 ```
 
-### Check Overlap with Kris Keywords
+### Check Institute Overlap
 ```{r}
-kris_key <- read.delim("../data/kris_keywords.txt", header=F)
-kris_overlap <- list()
+k_ninr_keys <- list()
+k_nia_keys <- list()
 index <- 1
-count <- 0
-flag <- 0
 
-for (row_kris in 1:nrow(kris_key)) {
-  for (row in 1:nrow(k)) {
-    for (col in 1:ncol(k)) {
-      k_word <- str_replace_all(k[row, col], "_", " ")
-      if (grepl(tolower(as.String(k_word)), tolower(as.String(kris_key[row_kris,])), fixed=TRUE) | grepl(tolower(as.String(kris_key[row_kris,])), tolower(as.String(k_word)), fixed=TRUE)) {
-        kris_overlap[index] <- tolower(as.String(kris_key[row_kris,]))
-        index <- index + 1
-        flag <- 1
-      }
-    }
-  }
-  if (flag == 1) {
-    count <- count + 1
-  }
-  flag <- 0
-}
-
-length(kris_overlap)
-
-(length(kris_overlap) / length(k)) * 100
-
-(count / nrow(kris_key)) * 100
-
-lapply(kris_overlap, write, "kris_overlap.txt", append=TRUE)
-```
-
-### Format PCC_key
-```{r}
-# Read in PCC keywords file
-PCC_key <- read_excel("../data/PCC_keywords.xlsx", col_names = FALSE)
-
-# Remove weird characters
-PCC_key$...2 = str_replace_all(PCC_key$...2, "\n", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "\r", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "'", "")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "-", " ")
-
-# Replace non-alpha numeric characters with a space
-PCC_key$...2 = str_replace_all(PCC_key$...2, "[^abcdefghijklmnopqrstuvwxyzABCDEFHIJKLMNOPQRSTUVWXZ0123456789 ]", " ")
-
-# Put everything in lowercase
-PCC_key$...2 = tolower(PCC_key$...2)
-
-# Remove a few select words and extra spaces
-PCC_key$...2 = str_replace_all(PCC_key$...2, "abstract", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "project", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "proposal", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "summary", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "narrative", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "background", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "supplement", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "significance", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "overall", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "title", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "specific aims", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "goal", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "research plan", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "overview", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "\\s+", " ")
-PCC_key$...2 = str_replace_all(PCC_key$...2, "description provided by applicant", " ")
-
-PCC_key$...2 = str_trim(PCC_key$...2, side = "both")
-
-```
-
-### Check Overlap with PCC Keywords
-```{r}
-
-PCC_overlap <- list()
-pcc_list <- list()
-topic_keywords_list <- list()
-index <- 1
-count <- 0
-flag <- 0
-find <- 0
-                 
-for (row_PCC in 1:nrow(PCC_key)) {
-  for (row in 1:nrow(k)) {
-    for (col in 1:ncol(k)) {
-      k_word <- invisible(str_replace_all(k[row, col], "_", " "))
-      PCC_text <- invisible(as.list(scan(text=as.character(PCC_key[row_PCC, 2]), what='', sep=' ')))
-      for (index_PCC in 1: length(PCC_text)) {
-        word <- PCC_text[index_PCC]
-        location <- gregexpr(pattern = tolower(as.String(k_word)), as.String(word))[[1]]
-        if (location > 0) {
-          print(word)
-          print(k_word)
-        }
-        if (grepl(tolower(as.String(k_word)), tolower(as.String(PCC_key[row_PCC, 2])), fixed=TRUE) && (as.double(location / nchar(as.String(word))) < 0.5 && location > 0 && !(k_word %in% c("eh", "sm", "sca", "eh", "af", "ic", "asp")))) {
-          PCC_overlap[index] <- tolower(as.String(PCC_key[row_PCC, 2]))
-          pcc_list[index] <- PCC_key[row_PCC, 1]
-          topic_keywords_list[index] <- k_word
-          index <- index + 1
-          flag <- 1
-          break
+for (row in 1:nrow(k_ninr)) {
+  for (col in 1:ncol(k_ninr)) {
+    for (row_other in 1:nrow(k_nia)) {
+      for (col_other in 1:ncol(k_nia)) {
+        ninr_word <- as.String(k_ninr[row, col])
+        nia_word <- as.String(k_nia[row_other, col_other])
+        if ((grepl(tolower(ninr_word), tolower(nia_word), fixed=TRUE) | 
+            grepl(tolower(nia_word), tolower(ninr_word), fixed=TRUE)) && 
+            (!(ninr_word %in% c("eh", "sm", "sca", "eh", "af", "ic", "asp"))) && (!(nia_word %in% c("eh", "sm", "sca", "eh", "af", "ic", "asp")))) {
+              k_ninr_keys[index] <- ninr_word
+              k_nia_keys[index] <- nia_word
+              index <- index + 1
         }
       }
     }
   }
-  if (flag == 1) {
-    count <- count + 1
-  }
-  flag <- 0
 }
+  
 
-keywords_overlap <- data.frame("PCC" = I(pcc_list), "Topic_Keywords"= I(topic_keywords_list))
+keywords_overlap <- data.frame("NINR" = I(k_ninr_keys), "NICHD"= I(k_nia_keys))
+
+write_csv(keywords_overlap, "NINR-NICHD-prevention-keyword-overlap.csv")
 
 # Create unique keywords_overlap
-unique_keywords_overlap <- keywords_overlap[!duplicated(keywords_overlap[ , c("PCC")]),]
+unique_keywords_overlap <- keywords_overlap[!duplicated(keywords_overlap[ , c("NINR")]),]  
 
-PCC_overlap
+write_csv(unique_keywords_overlap, "NINR-NICHD-prevention-unique-keyword-overlap.csv")
 
-length(unique(keywords_overlap$Topic_Keywords))
+length(unique(keywords_overlap$NIA))
 
 keywords_overlap <- as.data.frame(lapply(keywords_overlap, unlist))
+keywords_overlap$NINR <- as.factor(keywords_overlap$NINR)
 
-keywords_overlap$Topic_Keywords <- as.factor(keywords_overlap$Topic_Keywords)
-
-keywords_overlap %>% 
-    group_by(Topic_Keywords) %>% 
+freq_keywords <- (keywords_overlap %>% 
+    group_by(NINR) %>% 
     count() %>%
-    arrange(desc(n))
+    arrange(desc(n)))
 
+
+write_csv(freq_keywords, "NINR-NICHD-prevention-freq-keywords.csv")
 ```
-### Create dataframe with grants, predominant topics, and RCDC concepts
-```{r}
-p = inner_join(select(ninr, Project:PO.Name), d)
-RCDC_concepts <- p
-RCDC_key <- read_excel("../data/NINR-2019-all-apps-with-RCDC.xlsx")
-RCDC_merge <- merge(RCDC_key, RCDC_concepts, by="Project")
-list_rcdc <- c()
-index <- 1
-
-#Convert RCDC categories column into list 
-
-RCDC_merge$`RCDC Concepts (Scaled)` = str_replace_all(RCDC_merge$`RCDC Concepts (Scaled)`, "//", " ")
-
-```
-
-
-### Check Overlap with RCDC Categories
-```{r}
-topic_words <- character(nrow(RCDC_merge))
-projects <- list()
-rcdc <- list()
-index <- 1
-
-for (row in 1:nrow(RCDC_merge)) {
-  topic_num <- as.integer(as.list(scan(text=as.character(RCDC_merge[row, 'Topic1']), what='', sep='T'))[2])
-  topic_words[index] <- paste( unlist(k[, topic_num]), collapse=';')
-  index <- index + 1
-}
-
-RCDC_merge$TopicKeywords <- topic_words
-
-
-str(RCDC_merge[, 'RCDC Concepts (Scaled)'])
-str(RCDC_merge[, 'TopicKeywords'])
-
-# Compare keywords in RCDC Concepts (Scaled) column and TopicKeywords column
-
-index <- 1
-topic_words <- list()
-
-for (row in 1:nrow(RCDC_merge)) {
-  print(row)
-  topic_keywords <- strsplit(toString(RCDC_merge[row, 'TopicKeywords']),";") 
-  topic_keywords <- unlist(topic_keywords)
-  RCDC_keywords <- strsplit(toString(RCDC_merge[row, 'RCDC Concepts (Scaled)']), "[[:space:]]")
-  RCDC_keywords <- unlist(RCDC_keywords)
-  for (index_topic_keywords in 1: length(topic_keywords)) {
-    topic_word <- str_replace_all(topic_keywords[index_topic_keywords], "_", " ")
-    #print(topic_word)
-    for (index_RCDC_keywords in 1: length(RCDC_keywords)) {
-      RCDC_word <- RCDC_keywords[index_RCDC_keywords]
-      location <- gregexpr(pattern = tolower(as.String(topic_word)), as.String(RCDC_word))[[1]]
-      if (grepl(tolower(as.String(topic_word)), tolower(as.String(RCDC_word)), fixed=TRUE) && (as.double(location / nchar(as.String(RCDC_word))) < 0.5 && location > 0 && !(topic_word %in% c("eh", "sm", "sca", "eh", "af", "ic", "asp")))) {
-        projects[index] <- RCDC_merge[row, "Project"]
-        rcdc[index] <- RCDC_word
-        topic_words[index] <- topic_word
-        index <- index + 1
-      }
-    } 
-  }
-}
-
-
-keywords_overlap_RCDC <- data.frame("Project" = I(projects), "RCDC" = I(rcdc), "Topic_Keywords"= I(topic_words))
-
-
-length(unique(keywords_overlap_RCDC$Topic_Keywords))
-
-
-keywords_overlap_RCDC <- as.data.frame(lapply(keywords_overlap_RCDC, unlist))
-
-keywords_overlap_RCDC$Project <- as.factor(keywords_overlap_RCDC$Project)
-
-keywords_overlap_RCDC %>% 
-    group_by(Topic_Keywords) %>% 
-    count() %>% 
-    arrange(desc(n))
-
-```
-
 
 ### Term frequency functions
 ```{r}
@@ -639,13 +547,10 @@ for (row in 1:nrow(term_frequency_pre_LDA)) {
   }
 }
 
+term_frequency_pre_LDA
+
 ```
 
-## LDAvis
-
-```{r}
-lda_model$plot()
-```
 
 \newpage
 
