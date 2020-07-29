@@ -30,6 +30,7 @@ library(readxl)
 ## Data Visualization Packages
 library(ggplot2)
 library(Rtsne)
+library(scales)
 
 ## Text Mining Packages
 library(data.table)
@@ -52,11 +53,27 @@ First we load the data of NINR grants awarded in 2019.  We pull four sources of 
 ```{r, message = FALSE, cache = TRUE}
 ninr_1 = read_excel("./../data/NINR_Translational.xlsx", guess_max = 1000000)
 ninr_2 = read_excel("./../data/NIA_Translational.xlsx", guess_max = 1000000)
+
+# randomly sample so that each institute has an equal number of grants
+smaller_count <- -1
+
+if (nrow(ninr_1) < nrow(ninr_2)) {
+  smaller_count <- nrow(ninr_1)
+  # randomly sample smaller_count rows from ninr_2
+  ninr_2 <- ninr_2[sample(nrow(ninr_2), smaller_count), ]
+} else {
+  smaller_count <- nrow(ninr_2)
+  # randomly sample smaller_count rows from ninr_1
+  ninr_1 <- ninr_1[sample(nrow(ninr_1), smaller_count), ]
+}
+
+
+
 ninr = rbind(ninr_1, ninr_2)
 
 
 
-nia = read_excel("./../data/NIA_Translational.xlsx", guess_max = 1000000)
+#nia = read_excel("./../data/NIA_Translational.xlsx", guess_max = 1000000)
 
 # TODO: keep PCC in ninr dataframe in the future
 
@@ -76,7 +93,7 @@ rename <- function(institute) {
 }
 
 ninr <- rename(ninr)
-nia <- rename(nia)
+#nia <- rename(nia)
 
 ```
 
@@ -112,7 +129,7 @@ text_field <- function(institute) {
 }
 
 ninr <- text_field(ninr)
-nia <- text_field(nia)
+#nia <- text_field(nia)
 
 ```
 
@@ -129,7 +146,7 @@ clean_text <- function(institute) {
   institute$Text = str_replace_all(institute$Text, "-", " ")
 
   # Replace non-alpha numeric characters with a space
-  institute$Text = str_replace_all(institute$Text, "[^abcdefghijklmnopqrstuvwxyzABCDEFHIJKLMNOPQRSTUVWXZ0123456789 ]", " ")
+  institute$Text = str_replace_all(institute$Text, "[^abcdefghijklmnopqrstuvwxyzABCDEFHIJKLMNOPQRSTUVWXZ]", " ") #0123456789 ]", " ")
 
   # Put everything in lowercase
   institute$Text = tolower(institute$Text)
@@ -158,7 +175,7 @@ clean_text <- function(institute) {
 }
 
 
-nia <- clean_text(nia)
+#nia <- clean_text(nia)
 ninr <- clean_text(ninr)
 
 ```
@@ -171,7 +188,7 @@ remove_duplicates <- function(institute) {
   institute <- institute[!duplicated(institute[ , c("Text")]),]
   return(institute)
 }
-nia <- remove_duplicates(nia)
+#nia <- remove_duplicates(nia)
 ninr <- remove_duplicates(ninr)
 
 ```
@@ -181,14 +198,14 @@ ninr <- remove_duplicates(ninr)
 
 Let's build a Document-Term Matrix (DTM).
 ```{r}
-build_dtm <- function(institute) {
-  setDT(institute)
-  setkey(institute, Project)
-  return(institute)
-}
+#build_dtm <- function(institute) {
+  setDT(ninr)
+  setkey(ninr, Project)
+#  return(institute)
+#}
 
-nia <- build_dtm(nia)
-ninr <- build_dtm(ninr)
+#nia <- build_dtm(nia)
+#ninr <- build_dtm(ninr)
 
 ```
 
@@ -244,7 +261,7 @@ build_vocab <- function(institute) {
   return(dtm)
 }
 
-nia_dtm <- build_vocab(nia)
+#nia_dtm <- build_vocab(nia)
 ninr_dtm <- build_vocab(ninr)
 
 ```
@@ -252,7 +269,7 @@ ninr_dtm <- build_vocab(ninr)
 ### Write DTM to file
 
 ```{r}
-nia_dtm_matrix <- as.matrix(nia_dtm)
+#nia_dtm_matrix <- as.matrix(nia_dtm)
 ninr_dtm_matrix <- as.matrix(ninr_dtm)
 ```
 
@@ -345,8 +362,8 @@ Let's load the optimal parameters.
 pp_ninr = read_csv("LDA_Opt_Param_NINR_NIA_Translational.csv")
 pp_ninr = data.frame(pp_ninr)
 
-pp_nia = read_csv("LDA_Opt_Param_NIA_Translational.csv")
-pp_nia = data.frame(pp_nia)
+#pp_nia = read_csv("LDA_Opt_Param_NIA_Translational.csv")
+#pp_nia = data.frame(pp_nia)
 ```
 
 Now we choose the desired number of topic.
@@ -365,7 +382,7 @@ Now we choose the desired number of topic.
 
   set.seed(123)
   doc_topic_distr = 
-     lda_model$fit_transform(x = dtm, 
+     lda_model$fit_transform(x = ninr_dtm, 
                              n_iter = 1000, 
                              convergence_tol = 0.0001, 
                              n_check_convergence = 25, 
@@ -433,14 +450,14 @@ j = j$topic.order
 j = as.integer(j)
 
 
-k = lda_model$get_top_words(n = 20, topic_number = 1:topics, lambda = 1)
+k = lda_model$get_top_words(n = 20, topic_number = 1:topics, lambda = 0.3)
 k = k[, j]
 
 k1 = data.frame(k1)
 colnames(k1) = paste0("T", 1:topics)
 k1
 ```
-
+# -----------------IGNORE START------------------------------------------------------------------------------------------------------------
 
 # Derive Acronyms Using Lookup Table
 ```{r}
@@ -540,7 +557,7 @@ term_frequency_pre_LDA <- k
 for (row in 1:nrow(term_frequency_pre_LDA)) {
   for (col in 1:ncol(term_frequency_pre_LDA)) {
     #print(term_frequency_pre_LDA[row, col])
-    term <- find_dtm(term_frequency_pre_LDA[row, col], m)
+    term <- find_dtm(term_frequency_pre_LDA[row, col], ninr_dtm_matrix)
     if (term$cond == 1) {
       term_frequency_pre_LDA[row, col] <-  paste(term_frequency_pre_LDA[row, col], as.String(term$freq), sep= ", ")
     }
@@ -550,7 +567,124 @@ for (row in 1:nrow(term_frequency_pre_LDA)) {
 term_frequency_pre_LDA
 
 ```
+# -----------------IGNORE END--------------------------------------------------------------------------------------------------------------
 
+## Output Application Topics
+
+```{r}
+
+p = inner_join(select(ninr, Project:PO.Name), d)
+
+p2 = (
+  p %>% mutate(
+               T1 = round(100*T1, 2),
+               T2 = round(100*T2, 2),
+               T3 = round(100*T3, 2),
+               T4 = round(100*T4, 2),
+               T5 = round(100*T5, 2),
+               T6 = round(100*T6, 2),
+               T7 = round(100*T7, 2),
+               T8 = round(100*T8, 2),
+               T9 = round(100*T9, 2),
+               T10 = round(100*T10, 2),
+               T11 = round(100*T11, 2),
+               T12 = round(100*T12, 2),
+               T13 = round(100*T13, 2))
+   # TODO: Include Title in file
+   # %>% mutate(Title = paste0('=HYPERLINK(', 
+   #                           '"https://apps.era.nih.gov/qvr/web/dd_abstract.cfm?ApplId=', 
+   #                           AID, 
+   #                           '&sourceCode=CURRENT&rcdc=Y"', 
+   #                           ', "', 
+   #                           Title, '")'))
+)
+
+write_csv(p2, "NINR-NIA-topics.csv")
+```
+
+
+## Display proportion of topics accounted for by different institutes
+```{r}
+# TODO: Change institute name
+ninr_grants <- p2[substr(p2$Project, 1, 2) == "NR",]
+
+nia_grants <- p2[substr(p2$Project, 1, 2) == "AG",]
+
+hist(ninr_grants$T11)
+hist(nia_grants$T11)
+
+nia_grants %>%
+  distinct(Project, .keep_all=TRUE) %>%
+  ggplot(aes(x=T11)) +
+    geom_histogram() +
+    scale_x_continuous(breaks = round(seq(0, 100, by = 10),1)) +
+    scale_y_continuous(breaks = round(seq(0, 620, by = 10),1)) 
+
+```
+
+```{r}
+# TODO: Change threshold percentage and topic number
+n = names(p)
+n1 = names(select(p, Project:Topic2))
+n2 = sort(n[!(n %in% n1)])
+
+topic_list <- function(x) {
+  top_list <- c()
+  index = 0
+  row <- x[n2]
+  for (i in 1: length(row)) {
+    # 100 / 13 ~ 8, so 8 * 3 = 24
+    if (as.double(row[i]) >= 24) {
+      top_list <- append(top_list, n2[i])
+      index = index + 1
+    }
+  }
+  return(top_list)
+}
+
+vals_ninr <- apply(ninr_grants, 1, function(x) topic_list(x))
+vals_nia <- apply(nia_grants, 1, function(x) topic_list(x))
+
+if (!is.null(vals_ninr)) {
+  ninr_grants$TopicList <- vals_ninr
+}
+
+if (!is.null(vals_nia)) {
+  nia_grants$TopicList <- vals_nia
+}
+
+topic_num <- "T1"
+
+ninr_grants_topic_count = 0
+for (row in 1:nrow(ninr_grants)) {
+  if (topic_num %in% unlist(ninr_grants[row, "TopicList"])) {
+    ninr_grants_topic_count <- ninr_grants_topic_count + 1
+  }
+}
+
+nia_grants_topic_count = 0
+for (row in 1:nrow(nia_grants)) {
+  if (topic_num %in% unlist(nia_grants[row, "TopicList"])) {
+    nia_grants_topic_count <- nia_grants_topic_count + 1
+  }
+}
+
+#nia_percentage <- (nia_grants_topic_count / nrow(nia_grants)) * 100
+#nia_percentage <- round(nia_percentage, 2)
+#ninr_percentage <- (ninr_grants_topic_count / nrow(ninr_grants)) * 100
+#ninr_percentage <- round(ninr_percentage, 2)
+
+#pie_ninr_percentage <- round((ninr_percentage / (ninr_percentage + nia_percentage)) * 100, 2)
+#pie_nia_percentage <- round((nia_percentage / (ninr_percentage + nia_percentage)) * 100, 2)
+
+pie_ninr_percentage <- round((ninr_grants_topic_count / (ninr_grants_topic_count + nia_grants_topic_count)) * 100, 2)
+pie_nia_percentage <- round((nia_grants_topic_count / (ninr_grants_topic_count + nia_grants_topic_count)) * 100, 2)
+pie(c(pie_ninr_percentage, pie_nia_percentage), c(paste0("NINR (", pie_ninr_percentage, "%)"), paste0("NIA (", pie_nia_percentage, "%)")))
+
+
+
+
+```
 
 \newpage
 
@@ -560,10 +694,6 @@ term_frequency_pre_LDA
 Here we dimensionally reduce the feature vectors of each grant to two dimensions using the t-distributed Stochastic Neighbor Embedding (t-SNE) algorithm and plot each grant in the reduced 2D space.
 
 ```{r, message = FALSE, warning = FALSE, fig.height = 4.1}
-
-n = names(p)
-n1 = names(select(p, Project:Topic2))
-n2 = sort(n[!(n %in% n1)])
 
 dtm2 = as.matrix(dtm)
 dtm3 = data.frame(dtm2)
@@ -745,77 +875,6 @@ for(topic in sort(unique(p1$Topic))){
   print(g)
   cat("\n\n")
 }
-```
-
-## Output Application Topics
-
-```{r}
-p2 = (
-  p %>% mutate(
-               T1 = round(100*T1, 2),
-               T2 = round(100*T2, 2),
-               T3 = round(100*T3, 2),
-               T4 = round(100*T4, 2),
-               T5 = round(100*T5, 2),
-               T6 = round(100*T6, 2),
-               T7 = round(100*T7, 2),
-               T8 = round(100*T8, 2),
-               T9 = round(100*T9, 2),
-               T10 = round(100*T10, 2),
-               T11 = round(100*T11, 2),
-               T12 = round(100*T12, 2),
-               T13 = round(100*T13, 2))
-   # TODO: Include Title in file
-   # %>% mutate(Title = paste0('=HYPERLINK(', 
-   #                           '"https://apps.era.nih.gov/qvr/web/dd_abstract.cfm?ApplId=', 
-   #                           AID, 
-   #                           '&sourceCode=CURRENT&rcdc=Y"', 
-   #                           ', "', 
-   #                           Title, '")'))
-)
-
-write_csv(p2, "NINR-2019-overlap-topics.csv")
-```
-
-## ggupset plots
-
-```{r}
-
-topic_list <- function(x) {
-  top_list <- c()
-  index = 0
-  row <- x[n2]
-  for (i in 1: length(row)) {
-    if (as.double(row[i]) >= 33.33) {
-      top_list <- append(top_list, n2[i])
-      index = index + 1
-    }
-  }
-  return(top_list)
-}
-
-vals <- apply(p2, 1, function(x) topic_list(x))
-
-p2$FY <- ninr$FY
-
-if (!is.null(vals)) {
-  p2$TopicList <- vals
-  p2_exclude <- p2[p2$TopicList == 'NULL',]
-  
-  p2 %>%
-    distinct(Project, .keep_all=TRUE) %>%
-    ggplot(aes(x=TopicList)) +
-      geom_bar() +
-      scale_x_continuous(breaks = round(seq(0, 200, by = 50),1)) +
-      scale_y_continuous(breaks = round(seq(0, 200, by = 50),1)) + 
-      scale_x_upset(order_by = "freq")
-  
-  #print('Number of grants before applying threshold: ')
-  #print(nrow(p2))
-  #print('Number of grants after applying threshold: ')
-  #print(nrow(p2) - nrow(p2_exclude))
-}
-
 ```
 
 
