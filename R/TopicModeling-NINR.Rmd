@@ -52,20 +52,20 @@ First we load the data of NINR grants awarded in 2019.  We pull four sources of 
 \end{itemize}x
 ```{r, message = FALSE, cache = TRUE}
 ninr_1 = read_excel("./../data/NINR_Translational.xlsx", guess_max = 1000000)
-ninr_2 = read_excel("./../data/NIA_Translational.xlsx", guess_max = 1000000)
+ninr_2 = read_excel("./../data/NICHD_Translational.xlsx", guess_max = 1000000)
 
 # randomly sample so that each institute has an equal number of grants
-smaller_count <- -1
+#smaller_count <- -1
 
-if (nrow(ninr_1) < nrow(ninr_2)) {
-  smaller_count <- nrow(ninr_1)
+#if (nrow(ninr_1) < nrow(ninr_2)) {
+#  smaller_count <- nrow(ninr_1)
   # randomly sample smaller_count rows from ninr_2
-  ninr_2 <- ninr_2[sample(nrow(ninr_2), smaller_count), ]
-} else {
-  smaller_count <- nrow(ninr_2)
-  # randomly sample smaller_count rows from ninr_1
-  ninr_1 <- ninr_1[sample(nrow(ninr_1), smaller_count), ]
-}
+#  ninr_2 <- ninr_2[sample(nrow(ninr_2), smaller_count), ]
+#} else {
+#  smaller_count <- nrow(ninr_2)
+#  # randomly sample smaller_count rows from ninr_1
+#  ninr_1 <- ninr_1[sample(nrow(ninr_1), smaller_count), ]
+#}
 
 
 
@@ -285,7 +285,7 @@ opt_param <- function(dtm, filename) {
   
  as = c(0.05, 10^(-5:5))
  bs = c(0.05, 10^(-5:5))
- topics = 12:13
+ topics = 13
  
  pp = NULL
  
@@ -339,7 +339,7 @@ opt_param <- function(dtm, filename) {
          p1 = p
        }
      }
-   }
+   }s
    
    pp1 = data.frame(Topics = topic, Alpha = a1, Beta = b1, Perplexity = p1)
    pp = rbind(pp, pp1)
@@ -353,13 +353,13 @@ opt_param <- function(dtm, filename) {
 }
 
 #opt_param(nia_dtm, "LDA_Opt_Param_NICHD_Prevention.csv")
-opt_param(ninr_dtm, "LDA_Opt_Param_NINR_NIA_Translational.csv")
+opt_param(ninr_dtm, "LDA_Opt_Param_NINR_NICHD_Translational.csv")
 
 ```
 
 Let's load the optimal parameters.
 ```{r}
-pp_ninr = read_csv("LDA_Opt_Param_NINR_NIA_Translational.csv")
+pp_ninr = read_csv("LDA_Opt_Param_NINR_NIDDK_Prevention.csv")
 pp_ninr = data.frame(pp_ninr)
 
 #pp_nia = read_csv("LDA_Opt_Param_NIA_Translational.csv")
@@ -450,12 +450,12 @@ j = j$topic.order
 j = as.integer(j)
 
 
-k = lda_model$get_top_words(n = 20, topic_number = 1:topics, lambda = 0.3)
+k = lda_model$get_top_words(n = 20, topic_number = 1:topics, lambda = 0)
 k = k[, j]
 
-k1 = data.frame(k1)
-colnames(k1) = paste0("T", 1:topics)
-k1
+k = data.frame(k)
+colnames(k) = paste0("T", 1:topics)
+k
 ```
 # -----------------IGNORE START------------------------------------------------------------------------------------------------------------
 
@@ -599,7 +599,7 @@ p2 = (
    #                           Title, '")'))
 )
 
-write_csv(p2, "NINR-NIA-topics.csv")
+write_csv(p2, "NINR-NICHD-topics.csv")
 ```
 
 
@@ -608,7 +608,7 @@ write_csv(p2, "NINR-NIA-topics.csv")
 # TODO: Change institute name
 ninr_grants <- p2[substr(p2$Project, 1, 2) == "NR",]
 
-nia_grants <- p2[substr(p2$Project, 1, 2) == "AG",]
+nia_grants <- p2[substr(p2$Project, 1, 2) == "HD",]
 
 hist(ninr_grants$T11)
 hist(nia_grants$T11)
@@ -634,7 +634,7 @@ topic_list <- function(x) {
   row <- x[n2]
   for (i in 1: length(row)) {
     # 100 / 13 ~ 8, so 8 * 3 = 24
-    if (as.double(row[i]) >= 24) {
+    if (as.double(row[i]) >= 25) {
       top_list <- append(top_list, n2[i])
       index = index + 1
     }
@@ -653,7 +653,7 @@ if (!is.null(vals_nia)) {
   nia_grants$TopicList <- vals_nia
 }
 
-topic_num <- "T1"
+topic_num <- "T13"
 
 ninr_grants_topic_count = 0
 for (row in 1:nrow(ninr_grants)) {
@@ -669,16 +669,16 @@ for (row in 1:nrow(nia_grants)) {
   }
 }
 
-#nia_percentage <- (nia_grants_topic_count / nrow(nia_grants)) * 100
-#nia_percentage <- round(nia_percentage, 2)
-#ninr_percentage <- (ninr_grants_topic_count / nrow(ninr_grants)) * 100
-#ninr_percentage <- round(ninr_percentage, 2)
+nia_percentage <- (nia_grants_topic_count / nrow(nia_grants)) * 100
+nia_percentage <- round(nia_percentage, 2)
+ninr_percentage <- (ninr_grants_topic_count / nrow(ninr_grants)) * 100
+ninr_percentage <- round(ninr_percentage, 2)
 
-#pie_ninr_percentage <- round((ninr_percentage / (ninr_percentage + nia_percentage)) * 100, 2)
-#pie_nia_percentage <- round((nia_percentage / (ninr_percentage + nia_percentage)) * 100, 2)
+pie_ninr_percentage <- round((ninr_percentage / (ninr_percentage + nia_percentage)) * 100, 2)
+pie_nia_percentage <- round((nia_percentage / (ninr_percentage + nia_percentage)) * 100, 2)
 
-pie_ninr_percentage <- round((ninr_grants_topic_count / (ninr_grants_topic_count + nia_grants_topic_count)) * 100, 2)
-pie_nia_percentage <- round((nia_grants_topic_count / (ninr_grants_topic_count + nia_grants_topic_count)) * 100, 2)
+#pie_ninr_percentage <- round((ninr_grants_topic_count / (ninr_grants_topic_count + nia_grants_topic_count)) * 100, 2)
+#pie_nia_percentage <- round((nia_grants_topic_count / (ninr_grants_topic_count + nia_grants_topic_count)) * 100, 2)
 pie(c(pie_ninr_percentage, pie_nia_percentage), c(paste0("NINR (", pie_ninr_percentage, "%)"), paste0("NIA (", pie_nia_percentage, "%)")))
 
 
