@@ -39,6 +39,7 @@ library(tm)
 library(SnowballC)
 library(rARPACK)
 library(ggupset)
+
 ```
 
 ## Load Data
@@ -456,27 +457,34 @@ Here we dimensionally reduce the feature vectors of each grant to two dimensions
 
 ```{r, message = FALSE, warning = FALSE, fig.height = 4.1}
 p = inner_join(select(ninr, Project:PO.Name), d)
+p = cbind(FY=ninr$FY, p)
 
 n = names(p)
-n1 = names(select(p, Project:Topic2))
+n1 = names(select(p, FY:Topic2))
 n2 = sort(n[!(n %in% n1)])
 
 dtm2 = as.matrix(dtm)
 dtm3 = data.frame(dtm2)
 dtm3$Project = row.names(dtm2)
-dtm4 = inner_join(select(p, Project, Topic1, PO.Name), dtm3)
+dtm4 = inner_join(select(p, Project, Topic1, PO.Name, FY), dtm3)
 
 set.seed(123)
 
-ts = Rtsne(as.matrix(select(dtm4, -Project, -Topic1, -PO.Name)), check_duplicates=FALSE, pca=TRUE, perplexity=30, theta=0.5, dims=2)
-dts = as.data.frame(ts$Y)
-dts2 = cbind(select(dtm4, Project, Topic1, PO.Name), dts)
-dts2 = rename(dts2, PO.Name = PO.Name)
 
- (
+for (year in 2015:2019) {
+  dtm_sub = filter(dtm4, FY == UQ(year))
+  print(year)
+  print(nrow(dtm_sub))
+  ts = Rtsne(as.matrix(select(dtm_sub, -Project, -Topic1, -PO.Name)), check_duplicates=FALSE, pca=TRUE, perplexity=30, theta=0.5, dims=2)
+  print('got here')
+  dts = as.data.frame(ts$Y)
+  dts2 = cbind(select(dtm_sub, Project, Topic1, PO.Name), dts)
+  dts2 = rename(dts2, PO.Name = PO.Name)
+
+ print(
     ggplot(dts2, aes(x = V1, y = V2, col = Topic1))
   + geom_point()
-  + ggtitle("Most Likely Topic of Each Grant in Term Frequency Space")
+  + ggtitle(paste("Most Likely Topic of Each Grant in Term Frequency Space ", toString(year)))
   + theme_minimal()
   + theme(legend.position = "bottom",
           plot.title = element_text(hjust = 0.5),
@@ -484,10 +492,10 @@ dts2 = rename(dts2, PO.Name = PO.Name)
  )
 
 
- (
+ print(
     ggplot(dts2, aes(x = V1, y = V2, col = PO.Name))
   + geom_point()
-  + ggtitle("PO of Each Grant in Term Frequency Space")
+  + ggtitle(paste("PO of Each Grant in Term Frequency Space ", toString(year)))
   + theme_minimal()
   + theme(legend.position = "bottom",
           plot.title = element_text(hjust = 0.5),
@@ -496,17 +504,17 @@ dts2 = rename(dts2, PO.Name = PO.Name)
 
 
 
-set.seed(123)
+  set.seed(123)
 
-ts = Rtsne(as.matrix(select(p, n2)), check_duplicates=FALSE, pca=TRUE, perplexity=30, theta=0.5, dims=2)
-dts = as.data.frame(ts$Y)
-dts2 = cbind(select(p, Project, Topic1, PO.Name), dts)
-dts2 = rename(dts2, PO.Name = PO.Name)
+  ts = Rtsne(as.matrix(select(p, n2)), check_duplicates=FALSE, pca=TRUE, perplexity=30, theta=0.5, dims=2)
+  dts = as.data.frame(ts$Y)
+  dts2 = cbind(select(p, Project, Topic1, PO.Name), dts)
+  dts2 = rename(dts2, PO.Name = PO.Name)
 
- (
+ print(
     ggplot(dts2, aes(x = V1, y = V2, col = Topic1)) 
   + geom_point()
-  + ggtitle("Most Likely Topic of Each Grant in Topic Space")
+  + ggtitle(paste("Most Likely Topic of Each Grant in Topic Space ", toString(year)))
   + theme_minimal()
   + theme(legend.position = "bottom",
           plot.title = element_text(hjust = 0.5),
@@ -514,15 +522,19 @@ dts2 = rename(dts2, PO.Name = PO.Name)
  )
 
 
- (
+ print(
     ggplot(dts2, aes(x = V1, y = V2, col = PO.Name)) 
   + geom_point()
-  + ggtitle("PO of Each Grant in Topic Space")
+  + ggtitle(paste("PO of Each Grant in Topic Space ", toString(year)))
   + theme_minimal()
   + theme(legend.position = "bottom",
           plot.title = element_text(hjust = 0.5),
           axis.text.x = element_text(angle = 0, vjust = 0.4)) 
  )
+  
+}
+
+
 ```
 
 \newpage
@@ -532,8 +544,12 @@ dts2 = rename(dts2, PO.Name = PO.Name)
 Here we look at the breakdown of most likely topic (topic with the highest percentage) by PO.
 
 ```{r, fig.height = 4.1}
-p1 = (
+
+for (year in 2015:2019) {
+  
+  p1 = (
   p %>% group_by(PO.Name)
+    %>% filter(FY == year)
     %>% mutate(N = n())
     %>% ungroup()
     %>% group_by(PO.Name, Topic1, N)
@@ -542,12 +558,12 @@ p1 = (
     %>% mutate(Percentage = round(100*n/N))
 )
 
-(
+print(
     ggplot(p1, aes(x = PO.Name, y = n, fill = Topic1))
   + geom_bar(stat = "identity", width = 0.5)
   + ylab("Frequency")
   + xlab("PO")
-  + ggtitle("Most Likely Topics of POs (Frequency in Portfolio)")
+  + ggtitle(paste("Most Likely Topics of POs (Frequency in Portfolio) ", toString(year)))
   #+ scale_y_continuous(labels = scales::percent)
   + theme_minimal()
   + theme(legend.position = "right",
@@ -555,12 +571,12 @@ p1 = (
           axis.text.x = element_text(angle = 90, vjust = 0.4)) 
 )
 
-(
+print(
     ggplot(p1, aes(x = PO.Name, y = Percentage/100, fill = Topic1))
   + geom_bar(stat = "identity", width = 0.5)
   + ylab("Percentage")
   + xlab("PO")
-  + ggtitle("Most Likely Topics of POs (Percentage of Portfolio)")
+  + ggtitle(paste("Most Likely Topics of POs (Percentage of Portfolio) ", toString(year)))
   + scale_y_continuous(labels = scales::percent)
   + theme_minimal()
   + theme(legend.position = "right",
@@ -569,6 +585,9 @@ p1 = (
 )
 
 table(p$PO.Name)
+  
+}
+
 ```
 
 ## Distributions of Topics
@@ -576,70 +595,89 @@ table(p$PO.Name)
 Here we look at the distributions of the percentages of each topic in each grant, and the topic distributions of each PO's portfolio.  We use standard (Tukey) boxplots. In the boxplots, the black lines are the medians and the solid black dots are the means.
 
 ```{r, fig.height = 4.1}
-
-p1 = (
-  p %>% select(PO.Name, n2)
+for (year in 2015:2019) {
+  
+  p1 = (
+  p %>% select(PO.Name, n2, FY)
+    %>% filter(FY == year)
     %>% melt(measure.vars = n2, variable.name = "Topic", value.name = "Fraction")
     %>% arrange(PO.Name)
-)
+  )
 
-g = (
+  g = (
     ggplot(p1, aes(x = Topic, y = Fraction, fill = Topic))
   + geom_boxplot(width = 0.8, outlier.shape = 1)
   + stat_summary(fun.y = "mean", geom = "point", size = 0.9)
   + ylab("Percentage")
   + xlab("Topic")
-  + ggtitle("Distribution of Topic Percentages")
+  + ggtitle(paste("Distribution of Topic Percentages", toString(year)))
   + scale_y_continuous(labels = scales::percent)
   + theme_minimal()
   + theme(legend.position = "none",
           plot.title = element_text(hjust = 0.5),
           axis.text.x = element_text(angle = 0, vjust = 0.4)) 
-)
+  )
 
-print(g)
+  print(g)
 
-g1 = ggplot_build(g)
-colors = unique(g1$data[[1]]["fill"])
-colors$Topic = sort(unique(p1$Topic))
+  g1 = ggplot_build(g)
+  colors = unique(g1$data[[1]]["fill"])
+  colors$Topic = sort(unique(p1$Topic))
 
-(
+  print(
     ggplot(p1, aes(x = PO.Name, y = Fraction, fill = Topic))
   + geom_boxplot(width = 0.8, outlier.shape = 1)
   + stat_summary(fun.y = "mean", geom = "point", position = position_dodge(width=0.8), size = 0.9)
   + ylab("Percentage")
   + xlab("PO")
-  + ggtitle("Distribution of Topic Percentages by PO")
+  + ggtitle(paste("Distribution of Topic Percentages by PO", toString(year)))
   + scale_y_continuous(labels = scales::percent)
   + theme_minimal()
   + theme(legend.position = "right",
           plot.title = element_text(hjust = 0.5),
           axis.text.x = element_text(angle = 90, vjust = 0.4)) 
-)
+  )
+  
+}
+
 ```
 
 
 ```{r, fig.height = 4.1}
-for(topic in sort(unique(p1$Topic))){
-  g = (
-      ggplot(filter(p1, Topic == topic), aes(x = PO.Name, y = Fraction))
-    + geom_boxplot(width = 0.8, fill = colors[colors$Topic == topic, "fill"], outlier.shape = 1)
-    + stat_summary(fun.y = "mean", geom = "point", size = 0.9)
-    + ylab("Percentage")
-    + xlab("PO")
-    + scale_y_continuous(limits = c(0,1), labels = scales::percent)
-    + ggtitle(paste("Distribution of Topic", topic, "by PO"))
-    + theme_minimal()
-    + theme(legend.position = "right",
-                plot.title = element_text(hjust = 0.5),
-                plot.subtitle = element_text(hjust = 0.5),
-                #axis.text.x = element_text(color = s$Color),
-                panel.grid.major.x = element_blank(),
-                axis.text.x = element_text(angle = 90, vjust = 0.4))
-  )
+
+for (year in 2015:2019) {
   
-  print(g)
-  cat("\n\n")
+    p1 = (
+      p %>% select(PO.Name, n2, FY)
+      %>% filter(FY == year)
+      %>% melt(measure.vars = n2, variable.name = "Topic", value.name = "Fraction")
+      %>% arrange(PO.Name)
+    )
+    
+    
+    for(topic in sort(unique(p1$Topic))){
+      g = (
+        ggplot(filter(p1, Topic == topic), aes(x = PO.Name, y = Fraction))
+      + geom_boxplot(width = 0.8, fill = colors[colors$Topic == topic, "fill"], outlier.shape = 1)
+      + stat_summary(fun.y = "mean", geom = "point", size = 0.9)
+      + ylab("Percentage")
+      + xlab("PO")
+      + scale_y_continuous(limits = c(0,1), labels = scales::percent)
+      + ggtitle(paste("Distribution of Topic", topic, "by PO ", year))
+      + theme_minimal()
+      + theme(legend.position = "right",
+                  plot.title = element_text(hjust = 0.5),
+                  plot.subtitle = element_text(hjust = 0.5),
+                  #axis.text.x = element_text(color = s$Color),
+                  panel.grid.major.x = element_blank(),
+                  axis.text.x = element_text(angle = 90, vjust = 0.4))
+      )
+  
+      print(g)
+      cat("\n\n")
+    }
+  
+  
 }
 ```
 
@@ -670,7 +708,7 @@ p2 = (
    #                           Title, '")'))
 )
 
-write_csv(p2, "NINR-2015-2019-15-topics.csv")
+write_csv(p2, "NINR-2015-2019-constant-topics.csv")
 ```
 
 ## ggupset plots
@@ -682,7 +720,7 @@ topic_list <- function(x) {
   index = 0
   row <- x[n2]
   for (i in 1: length(row)) {
-    if (as.double(row[i]) >= 33.33) {
+    if (as.double(row[i]) >= 40) {
       top_list <- append(top_list, n2[i])
       index = index + 1
     }
@@ -692,20 +730,75 @@ topic_list <- function(x) {
 
 vals <- apply(p2, 1, function(x) topic_list(x))
 
+
 if (!is.null(vals)) {
   p2$TopicList <- vals
   p2_exclude <- p2[p2$TopicList == 'NULL',]
+ 
+  plot = (
+    p2 %>%
+      distinct(Project, .keep_all=TRUE) %>%
+      ggplot(aes(x=TopicList, y=FY)) +
+        geom_violin() +
+        scale_x_continuous(breaks = round(seq(0, 200, by = 50), 1)) +
+        #scale_y_continuous(breaks = round(seq(0, 200, by = 50), 1)) +
+        scale_x_upset(order_by = "freq")
   
+      #print('Number of grants before applying threshold: ')
+      #print(nrow(p2))
+      #print('Number of grants after applying threshold: ')
+      #print(nrow(p2) - nrow(p2_exclude))
+  )
+  print(plot)
+
+  #pg <- ggplot_build(plot)
+  #print(pg$data[[1]])
+
+}
+
+```
+
+
+## Histogram of topic distributions
+```{r}
+for (i in 1:13) {
+  topic = paste0("T", i)
+  plot = (
   p2 %>%
-    distinct(Project, .keep_all=TRUE) %>%
-    ggplot(aes(x=TopicList, y=FY)) +
-      geom_violin() +
-      scale_x_upset(order_by = "freq")
-  
-  #print('Number of grants before applying threshold: ')
-  #print(nrow(p2))
-  #print('Number of grants after applying threshold: ')
-  #print(nrow(p2) - nrow(p2_exclude))
+    ggplot(aes_string(x=topic)) +
+    geom_histogram() +
+    scale_x_continuous(breaks = round(seq(0, 100, by = 5), 1)) +
+    scale_y_continuous(breaks = round(seq(0, 4300, by = 100), 1))  +
+    ylim(c(0, 4300))
+  )
+  print(plot)
+}
+    
+```
+```{r}
+topic_num <- c(1, 4)
+for (i in topic_num) {
+  for (j in 2015:2019) {
+      topic = paste0("T", i)
+      print(topic)
+      
+      p1 = (
+        p2 %>% filter(FY == j)
+      )
+        
+      plot = (
+        p1 %>%
+        ggplot(aes_string(x=topic)) +
+        ggtitle(paste("Topic", i, "Percentages in Grants in", j)) + 
+        geom_histogram() +
+        scale_x_continuous(breaks = round(seq(0, 100, by = 5), 1)) +
+        scale_y_continuous(breaks = round(seq(0, 4300, by = 100), 1))  +
+        ylim(c(0, 4300))
+      )
+      print(j)
+      print(plot)
+    
+  }
 }
 
 ```
@@ -715,4 +808,5 @@ if (!is.null(vals)) {
 
 
 
-    
+
+
