@@ -49,10 +49,10 @@ First we load the data of NINR grants awarded in 2019.  We pull four sources of 
 \item T - Title
 \item A - Abstract Text
 \item S - Specific Aims (SA) Text
-\end{itemize}x
+\end{itemize}
 ```{r, message = FALSE, cache = TRUE}
-ninr_1 = read_excel("./../data/NINR_Translational.xlsx", guess_max = 1000000)
-ninr_2 = read_excel("./../data/NICHD_Translational.xlsx", guess_max = 1000000)
+ninr_1 = read_excel("./../data/NINR_Prevention.xlsx", guess_max = 1000000)
+ninr_2 = read_excel("./../data/NICHD_Prevention.xlsx", guess_max = 1000000)
 
 # randomly sample so that each institute has an equal number of grants
 #smaller_count <- -1
@@ -359,7 +359,7 @@ opt_param(ninr_dtm, "LDA_Opt_Param_NINR_NICHD_Translational.csv")
 
 Let's load the optimal parameters.
 ```{r}
-pp_ninr = read_csv("LDA_Opt_Param_NINR_NIDDK_Prevention.csv")
+pp_ninr = read_csv("LDA_Opt_Param_NINR_NICHD_Prevention.csv")
 pp_ninr = data.frame(pp_ninr)
 
 #pp_nia = read_csv("LDA_Opt_Param_NIA_Translational.csv")
@@ -599,7 +599,7 @@ p2 = (
    #                           Title, '")'))
 )
 
-write_csv(p2, "NINR-NICHD-topics.csv")
+write_csv(p2, "NINR-NICHD-prevention-topics.csv")
 ```
 
 
@@ -634,7 +634,7 @@ topic_list <- function(x) {
   row <- x[n2]
   for (i in 1: length(row)) {
     # 100 / 13 ~ 8, so 8 * 3 = 24
-    if (as.double(row[i]) >= 25) {
+    if (as.double(row[i]) >= 40) {
       top_list <- append(top_list, n2[i])
       index = index + 1
     }
@@ -653,7 +653,7 @@ if (!is.null(vals_nia)) {
   nia_grants$TopicList <- vals_nia
 }
 
-topic_num <- "T13"
+topic_num <- "T1"
 
 ninr_grants_topic_count = 0
 for (row in 1:nrow(ninr_grants)) {
@@ -679,7 +679,7 @@ pie_nia_percentage <- round((nia_percentage / (ninr_percentage + nia_percentage)
 
 #pie_ninr_percentage <- round((ninr_grants_topic_count / (ninr_grants_topic_count + nia_grants_topic_count)) * 100, 2)
 #pie_nia_percentage <- round((nia_grants_topic_count / (ninr_grants_topic_count + nia_grants_topic_count)) * 100, 2)
-pie(c(pie_ninr_percentage, pie_nia_percentage), c(paste0("NINR (", pie_ninr_percentage, "%)"), paste0("NIA (", pie_nia_percentage, "%)")))
+pie(c(pie_ninr_percentage, pie_nia_percentage), c(paste0("NINR (", pie_ninr_percentage, "%)"), paste0("NICHD (", pie_nia_percentage, "%)")))
 
 
 
