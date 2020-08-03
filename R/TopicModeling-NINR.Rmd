@@ -50,7 +50,7 @@ First we load the data of NINR grants awarded in 2019.  We pull four sources of 
 \item S - Specific Aims (SA) Text
 \end{itemize}x
 ```{r, message = FALSE, cache = TRUE}
-ninr = read_excel("./../data/NINR-2015-all-apps-with-RCDC.xlsx", guess_max = 1000000)
+ninr = read_excel("./../data/NINR-2019-all-apps-with-RCDC.xlsx", guess_max = 1000000)
 #not_awardedNINR19 = read_excel("./../data/not-awarded-grants-NINR-2019.xlsx", guess_max = 1000000)
 
 #ninr <- rbind(awardedNINR19, not_awardedNINR19)
@@ -193,13 +193,13 @@ cat("Number of terms in vocabulary:", dim(vocab)[1])
 
 ```{r}
 # TODO: Create list of custom stopwords
-#paul1 = read_excel("B1_Round1_2019-12-06.xlsx", sheet = "Stopwords")
-#paul2 = read_excel("B1_Round2_2019-12-06.xlsx", sheet = "Stopwords")
-#paul = rbind(paul1, paul2)
-#paul = paul$Stopword
+paul1 = read_excel("B1_Round1_2019-12-06.xlsx", sheet = "Stopwords")
+paul2 = read_excel("B1_Round2_2019-12-06.xlsx", sheet = "Stopwords")
+paul = rbind(paul1, paul2)
+paul = paul$Stopword
 #print(paul)
 
-#vocab = filter(vocab, !(term %in% paul))
+vocab = filter(vocab, !(term %in% paul))
 #cat("\nNumber of terms in vocabulary:", dim(vocab)[1])
 ```
 
@@ -233,7 +233,7 @@ UNCOMMENT THIS CODE TO FIND THE OPTIMAL PARAMETERS AGAIN
 ```{r}
  as = c(0.05, 10^(-5:5))
  bs = c(0.05, 10^(-5:5))
- topics = 3:15
+ topics = 2:3
  
  pp = NULL
  
@@ -296,12 +296,12 @@ UNCOMMENT THIS CODE TO FIND THE OPTIMAL PARAMETERS AGAIN
  cat("\n\n")
  
  pp
- write_csv(pp, "LDA_Opt_Param_NINR.csv")
+ write_csv(pp, "LDA_Opt_Param_NINR_19_couple_topics.csv")
 ```
 
 Let's load the optimal parameters.
 ```{r}
-pp = read_csv("LDA_Opt_Param_NINR.csv")
+pp = read_csv("LDA_Opt_Param_NINR_19_couple_topics.csv")
 pp = data.frame(pp)
 
 str(pp)
@@ -309,7 +309,7 @@ str(pp)
 
 Now we choose the desired number of topic.
 ```{r, message = FALSE, warining = FALSE}
-topic = 13
+topic = 3
 
 pp1 = filter(pp, Topics == topic)
 a1 = pp1$Alpha
@@ -364,6 +364,8 @@ table(d$Topic1)
 
 k1 = data.frame(k)
 colnames(k1) = paste0("Topic", 1:t1)
+
+k1
 
 #str(k1)
 ```
@@ -638,17 +640,17 @@ p2 = (
   p %>% mutate(
                T1 = round(100*T1, 2),
                T2 = round(100*T2, 2),
-               T3 = round(100*T3, 2),
-               T4 = round(100*T4, 2),
-               T5 = round(100*T5, 2),
-               T6 = round(100*T6, 2),
-               T7 = round(100*T7, 2),
-               T8 = round(100*T8, 2),
-               T9 = round(100*T9, 2),
-               T10 = round(100*T10, 2),
-               T11 = round(100*T11, 2),
-               T12 = round(100*T12, 2),
-               T13 = round(100*T13, 2))
+               T3 = round(100*T3, 2))
+               #T4 = round(100*T4, 2),
+               #T5 = round(100*T5, 2),
+               #T6 = round(100*T6, 2),
+               #T7 = round(100*T7, 2),
+               #T8 = round(100*T8, 2),
+               #T9 = round(100*T9, 2),
+               #T10 = round(100*T10, 2),
+               #T11 = round(100*T11, 2),
+               #T12 = round(100*T12, 2),
+               #T13 = round(100*T13, 2))
    # TODO: Include Title in file
    # %>% mutate(Title = paste0('=HYPERLINK(', 
    #                           '"https://apps.era.nih.gov/qvr/web/dd_abstract.cfm?ApplId=', 
@@ -658,7 +660,7 @@ p2 = (
    #                           Title, '")'))
 )
 
-write_csv(p2, "NINR-2015-topics.csv")
+#write_csv(p2, "NINR-2015-topics.csv")
 ```
 
 ## ggupset plots
@@ -670,7 +672,7 @@ topic_list <- function(x) {
   index = 0
   row <- x[n2]
   for (i in 1: length(row)) {
-    if (row[i] >= 33.33) {
+    if (as.numeric(row[i]) >= 33.33) {
       top_list <- append(top_list, n2[i])
       index = index + 1
     }
