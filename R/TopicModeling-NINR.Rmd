@@ -206,14 +206,14 @@ cat("Number of terms in vocabulary:", dim(vocab)[1])
 
 ```{r}
 # TODO: Create list of custom stopwords
-#paul1 = read_excel("B1_Round1_2019-12-06.xlsx", sheet = "Stopwords")
-#paul2 = read_excel("B1_Round2_2019-12-06.xlsx", sheet = "Stopwords")
-#paul = rbind(paul1, paul2)
-#paul = paul$Stopword
+paul1 = read_excel("B1_Round1_2019-12-06.xlsx", sheet = "Stopwords")
+paul2 = read_excel("B1_Round2_2019-12-06.xlsx", sheet = "Stopwords")
+paul = rbind(paul1, paul2)
+paul = paul$Stopword
 #print(paul)
 
-#vocab = filter(vocab, !(term %in% paul))
-#cat("\nNumber of terms in vocabulary:", dim(vocab)[1])
+vocab = filter(vocab, !(term %in% paul))
+cat("\nNumber of terms in vocabulary:", dim(vocab)[1])
 ```
 
 
@@ -246,7 +246,7 @@ UNCOMMENT THIS CODE TO FIND THE OPTIMAL PARAMETERS AGAIN
 ```{r}
  as = c(0.05, 10^(-5:5))
  bs = c(0.05, 10^(-5:5))
- topics = 13:15
+ topics = 13
  
  pp = NULL
  
@@ -720,7 +720,7 @@ topic_list <- function(x) {
   index = 0
   row <- x[n2]
   for (i in 1: length(row)) {
-    if (as.double(row[i]) >= 40) {
+    if (as.double(row[i]) >= 51) {
       top_list <- append(top_list, n2[i])
       index = index + 1
     }
