@@ -380,6 +380,27 @@ colnames(k1) = paste0("Topic", 1:t1)
 
 #str(k1)
 ```
+# LDAvis
+```{r}
+topics = 13
+dir.create(paste0("LDAvis_", topics))
+lda_model$plot(out.dir = paste0("LDAvis_", topics), open.browser = TRUE)
+```
+
+# Topic Order
+The topic order used by LDAvis is determined by the default circle area, $A_k$, described in the following PDF: https://rdrr.io/cran/LDAvis/f/inst/doc/details.pdf.  We can get the topic ordering directly from the JSON file that was created by LDAvis and reorder our topics.
+```{r}
+j = read_json(paste0("LDAvis_", topics, "/lda.json"))
+j = j$topic.order
+j = as.integer(j)
+k = lda_model$get_top_words(n = 20, topic_number = 1:topics, lambda = 0.25)
+k = k[, j]
+#k = data.frame(k)
+#colnames(k) = paste0("T", 1:topics)
+#k
+
+```
+
 
 # Derive Acronyms Using Lookup Table
 ```{r}
@@ -440,12 +461,6 @@ for (row in 1:nrow(term_frequency_pre_LDA)) {
 
 term_frequency_pre_LDA
 
-```
-
-## LDAvis
-
-```{r}
-lda_model$plot()
 ```
 
 \newpage
@@ -720,7 +735,7 @@ topic_list <- function(x) {
   index = 0
   row <- x[n2]
   for (i in 1: length(row)) {
-    if (as.double(row[i]) >= 51) {
+    if (as.double(row[i]) >= 40) {
       top_list <- append(top_list, n2[i])
       index = index + 1
     }
@@ -742,7 +757,7 @@ if (!is.null(vals)) {
         geom_violin() +
         scale_x_continuous(breaks = round(seq(0, 200, by = 50), 1)) +
         #scale_y_continuous(breaks = round(seq(0, 200, by = 50), 1)) +
-        scale_x_upset(order_by = "freq")
+        scale_x_upset(order_by = "freq", set = c("T4", "T5"))
   
       #print('Number of grants before applying threshold: ')
       #print(nrow(p2))
